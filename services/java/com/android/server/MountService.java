@@ -298,8 +298,6 @@ class MountService extends IMountService.Stub
     private static final int H_UNMOUNT_PM_UPDATE = 1;
     private static final int H_UNMOUNT_PM_DONE = 2;
     private static final int H_UNMOUNT_MS = 3;
-    private static final int RETRY_UNMOUNT_DELAY = 30; // in ms
-    private static final int MAX_UNMOUNT_RETRIES = 4;
 
     class UnmountCallBack {
         final String path;
@@ -316,7 +314,7 @@ class MountService extends IMountService.Stub
 
         void handleFinished() {
             if (DEBUG_UNMOUNT) Slog.i(TAG, "Unmounting " + path);
-            doUnmountVolume(path, true, removeEncryption);
+            doUnmountVolume(path, force, removeEncryption);
         }
     }
 
@@ -344,7 +342,7 @@ class MountService extends IMountService.Stub
 
         @Override
         void handleFinished() {
-            int ret = doUnmountVolume(path, true, removeEncryption);
+            int ret = doUnmountVolume(path, force, removeEncryption);
             if (observer != null) {
                 try {
                     observer.onShutDownComplete(ret);
@@ -390,52 +388,10 @@ class MountService extends IMountService.Stub
                     if (DEBUG_UNMOUNT) Slog.i(TAG, "H_UNMOUNT_PM_DONE");
                     if (DEBUG_UNMOUNT) Slog.i(TAG, "Updated status. Processing requests");
                     mUpdatingStatus = false;
-                    int size = mForceUnmounts.size();
-                    int sizeArr[] = new int[size];
-                    int sizeArrN = 0;
-                    // Kill processes holding references first
-                    ActivityManagerService ams = (ActivityManagerService)
-                    ServiceManager.getService("activity");
-                    for (int i = 0; i < size; i++) {
-                        UnmountCallBack ucb = mForceUnmounts.get(i);
-                        String path = ucb.path;
-                        boolean done = false;
-                        if (!ucb.force) {
-                            done = true;
-                        } else {
-                            int pids[] = getStorageUsers(path);
-                            if (pids == null || pids.length == 0) {
-                                done = true;
-                            } else {
-                                // Eliminate system process here?
-                                ams.killPids(pids, "unmount media", true);
-                                // Confirm if file references have been freed.
-                                pids = getStorageUsers(path);
-                                if (pids == null || pids.length == 0) {
-                                    done = true;
-                                }
-                            }
-                        }
-                        if (!done && (ucb.retries < MAX_UNMOUNT_RETRIES)) {
-                            // Retry again
-                            Slog.i(TAG, "Retrying to kill storage users again");
-                            mHandler.sendMessageDelayed(
-                                    mHandler.obtainMessage(H_UNMOUNT_PM_DONE,
-                                            ucb.retries++),
-                                    RETRY_UNMOUNT_DELAY);
-                        } else {
-                            if (ucb.retries >= MAX_UNMOUNT_RETRIES) {
-                                Slog.i(TAG, "Failed to unmount media inspite of " +
-                                        MAX_UNMOUNT_RETRIES + " retries. Forcibly killing processes now");
-                            }
-                            sizeArr[sizeArrN++] = i;
-                            mHandler.sendMessage(mHandler.obtainMessage(H_UNMOUNT_MS,
-                                    ucb));
-                        }
-                    }
-                    // Remove already processed elements from list.
-                    for (int i = (sizeArrN-1); i >= 0; i--) {
-                        mForceUnmounts.remove(sizeArr[i]);
+                    // Do unmount for all queued unmount's
+                    while (mForceUnmounts.size() > 0) {
+                        UnmountCallBack ucb = mForceUnmounts.remove(0);
+                        mHandler.sendMessage(mHandler.obtainMessage(H_UNMOUNT_MS, ucb));
                     }
                     break;
                 }
