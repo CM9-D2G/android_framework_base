@@ -216,7 +216,7 @@ typedef void* GLeglImageOES;
 #ifdef BOARD_GL_OES_EGL_IMG_EXTERNAL_HACK
 #define GL_TEXTURE_EXTERNAL_OES                                 0x0DE1
 #else
-#define GL_TEXTURE_EXTERNAL_OES                                 0x8D66
+#define GL_TEXTURE_EXTERNAL_OES                                 0x8D65
 #endif
 #define GL_SAMPLER_EXTERNAL_OES                                 0x8D66
 #define GL_TEXTURE_BINDING_EXTERNAL_OES                         0x8D67
