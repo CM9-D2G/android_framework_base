@@ -3109,7 +3109,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     @Override
     public int rotationForOrientationLw(int orientation, int lastRotation) {
-        if (false) {
+        if (true) {
             Slog.v(TAG, "rotationForOrientationLw(orient="
                         + orientation + ", last=" + lastRotation
                         + "); user=" + mUserRotation + " "
@@ -3123,6 +3123,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (sensorRotation < 0) {
                 sensorRotation = lastRotation;
             }
+
+            Slog.w(TAG, "checkingRotation(mLidOpen=" + mLidOpen + ", mLidOpenRotation=" + mLidOpenRotation + ")");
 
             int preferredRotation = -1;
             if (mHdmiPlugged) {
