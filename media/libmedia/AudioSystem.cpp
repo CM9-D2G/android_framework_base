@@ -24,6 +24,9 @@
 #include <math.h>
 
 #include <system/audio.h>
+#ifdef BOARD_USES_LEGACY_AUDIO
+#include <media/AudioParameter.h>
+#endif
 
 // ----------------------------------------------------------------------------
 
@@ -762,7 +765,288 @@ uint32_t AudioSystem::popCount(uint32_t u)
     u = ( u&0x0000ffff) + (u>>16);
     return u;
 }
+
+bool AudioSystem::isOutputDevice(audio_devices device)
+{
+    if ((popCount(device) == 1 ) &&
+        ((device & ~AUDIO_DEVICE_OUT_ALL) == 0)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AudioSystem::isInputDevice(audio_devices device)
+{
+    if ((popCount(device) == 1 ) &&
+        ((device & ~AUDIO_DEVICE_IN_ALL) == 0)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+#ifdef HAVE_FM_RADIO
+bool AudioSystem::isFmDevice(audio_devices device)
+{
+    if ((popCount(device) == 1 ) &&
+        ((device & ~AUDIO_DEVICE_OUT_FM_ALL) == 0)) {
+        return true;
+    } else {
+        return false;
+    }
+}
 #endif
+
+bool AudioSystem::isA2dpDevice(audio_devices device)
+{
+    if ((popCount(device) == 1 ) &&
+        (device & (AUDIO_DEVICE_OUT_BLUETOOTH_A2DP |
+                   AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES |
+                   AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER))) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AudioSystem::isBluetoothScoDevice(audio_devices device)
+{
+    if ((popCount(device) == 1 ) &&
+        (device & (AUDIO_DEVICE_OUT_BLUETOOTH_SCO |
+                   AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET |
+                   AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT |
+                   AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET))) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AudioSystem::isLowVisibility(stream_type stream)
+{
+    if (stream == AUDIO_STREAM_SYSTEM ||
+        stream == AUDIO_STREAM_NOTIFICATION ||
+        stream == AUDIO_STREAM_RING) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AudioSystem::isInputChannel(uint32_t channel)
+{
+    if ((channel & ~AUDIO_CHANNEL_IN_ALL) == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AudioSystem::isOutputChannel(uint32_t channel)
+{
+    if ((channel & ~AUDIO_CHANNEL_OUT_ALL) == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AudioSystem::isValidFormat(uint32_t format)
+{
+    switch (format & AUDIO_FORMAT_MAIN_MASK) {
+    case         AUDIO_FORMAT_PCM:
+    case         AUDIO_FORMAT_MP3:
+    case         AUDIO_FORMAT_AMR_NB:
+    case         AUDIO_FORMAT_AMR_WB:
+    case         AUDIO_FORMAT_AAC:
+    case         AUDIO_FORMAT_HE_AAC_V1:
+    case         AUDIO_FORMAT_HE_AAC_V2:
+    case         AUDIO_FORMAT_VORBIS:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool AudioSystem::isLinearPCM(uint32_t format)
+{
+    switch (format) {
+    case         AUDIO_FORMAT_PCM_32_BIT:
+    case         AUDIO_FORMAT_PCM_16_BIT:
+    case         AUDIO_FORMAT_PCM_8_BIT:
+        return true;
+    default:
+        return false;
+    }
+}
+
+status_t AudioSystem::setDeviceConnectionState(audio_devices device,
+                                                  device_connection_state state,
+                                                  const char *device_address) {
+    return setDeviceConnectionState((audio_devices_t)device, (audio_policy_dev_state_t)state, device_address);
+}
+
+AudioSystem::device_connection_state AudioSystem::getDeviceConnectionState(audio_devices device,
+                                                  const char *device_address) {
+    return (device_connection_state)getDeviceConnectionState((audio_devices_t)device, device_address);
+}
+
+
+const char *AudioParameter::keyRouting = "routing";
+const char *AudioParameter::keySamplingRate = "sampling_rate";
+const char *AudioParameter::keyFormat = "format";
+const char *AudioParameter::keyChannels = "channels";
+const char *AudioParameter::keyFrameCount = "frame_count";
+const char *AudioParameter::keyInputSource = "input_source";
+
+AudioParameter::AudioParameter(const String8& keyValuePairs)
+{
+    char *str = new char[keyValuePairs.length()+1];
+    mKeyValuePairs = keyValuePairs;
+
+    strcpy(str, keyValuePairs.string());
+    char *pair = strtok(str, ";");
+    while (pair != NULL) {
+        if (strlen(pair) != 0) {
+            size_t eqIdx = strcspn(pair, "=");
+            String8 key = String8(pair, eqIdx);
+            String8 value;
+            if (eqIdx == strlen(pair)) {
+                value = String8("");
+            } else {
+                value = String8(pair + eqIdx + 1);
+            }
+            if (mParameters.indexOfKey(key) < 0) {
+                mParameters.add(key, value);
+            } else {
+                mParameters.replaceValueFor(key, value);
+            }
+        } else {
+            LOGV("AudioParameter() cstor empty key value pair");
+        }
+        pair = strtok(NULL, ";");
+    }
+
+    delete[] str;
+}
+
+AudioParameter::~AudioParameter()
+{
+    mParameters.clear();
+}
+
+String8 AudioParameter::toString()
+{
+    String8 str = String8("");
+
+    size_t size = mParameters.size();
+    for (size_t i = 0; i < size; i++) {
+        str += mParameters.keyAt(i);
+        str += "=";
+        str += mParameters.valueAt(i);
+        if (i < (size - 1)) str += ";";
+    }
+    return str;
+}
+
+status_t AudioParameter::add(const String8& key, const String8& value)
+{
+    if (mParameters.indexOfKey(key) < 0) {
+        mParameters.add(key, value);
+        return NO_ERROR;
+    } else {
+        mParameters.replaceValueFor(key, value);
+        return ALREADY_EXISTS;
+    }
+}
+
+status_t AudioParameter::addInt(const String8& key, const int value)
+{
+    char str[12];
+    if (snprintf(str, 12, "%d", value) > 0) {
+        String8 str8 = String8(str);
+        return add(key, str8);
+    } else {
+        return BAD_VALUE;
+    }
+}
+
+status_t AudioParameter::addFloat(const String8& key, const float value)
+{
+    char str[23];
+    if (snprintf(str, 23, "%.10f", value) > 0) {
+        String8 str8 = String8(str);
+        return add(key, str8);
+    } else {
+        return BAD_VALUE;
+    }
+}
+
+status_t AudioParameter::remove(const String8& key)
+{
+    if (mParameters.indexOfKey(key) >= 0) {
+        mParameters.removeItem(key);
+        return NO_ERROR;
+    } else {
+        return BAD_VALUE;
+    }
+}
+
+status_t AudioParameter::get(const String8& key, String8& value)
+{
+    if (mParameters.indexOfKey(key) >= 0) {
+        value = mParameters.valueFor(key);
+        return NO_ERROR;
+    } else {
+        return BAD_VALUE;
+    }
+}
+
+status_t AudioParameter::getInt(const String8& key, int& value)
+{
+    String8 str8;
+    status_t result = get(key, str8);
+    value = 0;
+    if (result == NO_ERROR) {
+        int val;
+        if (sscanf(str8.string(), "%d", &val) == 1) {
+            value = val;
+        } else {
+            result = INVALID_OPERATION;
+        }
+    }
+    return result;
+}
+
+status_t AudioParameter::getFloat(const String8& key, float& value)
+{
+    String8 str8;
+    status_t result = get(key, str8);
+    value = 0;
+    if (result == NO_ERROR) {
+        float val;
+        if (sscanf(str8.string(), "%f", &val) == 1) {
+            value = val;
+        } else {
+            result = INVALID_OPERATION;
+        }
+    }
+    return result;
+}
+
+status_t AudioParameter::getAt(size_t index, String8& key, String8& value)
+{
+    if (mParameters.size() > index) {
+        key = mParameters.keyAt(index);
+        value = mParameters.valueAt(index);
+        return NO_ERROR;
+    } else {
+        return BAD_VALUE;
+    }
+}
+
+#endif /* BOARD_USES_AUDIO_LEGACY */
 
 }; // namespace android
 

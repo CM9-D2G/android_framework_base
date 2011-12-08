@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#ifndef BOARD_USES_AUDIO_LEGACY
+
 #define LOG_TAG "AudioParameter"
 //#define LOG_NDEBUG 0
 
@@ -177,3 +179,6 @@ status_t AudioParameter::getAt(size_t index, String8& key, String8& value)
 }
 
 };  // namespace android
+
+#endif /* BOARD_NEEDS_AUDIO_LEGACY */
+
