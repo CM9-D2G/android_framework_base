@@ -184,12 +184,14 @@ public:
                                     int id);
     static status_t unregisterEffect(int id);
     static status_t setEffectEnabled(int id, bool enabled);
-
     // clear stream to output mapping cache (gStreamOutputMap)
     // and output configuration cache (gOutputs)
     static void clearAudioConfigCache();
 
     static const sp<IAudioPolicyService>& get_audio_policy_service();
+#ifdef BOARD_USES_AUDIO_LEGACY
+    static uint32_t popCount(uint32_t u);
+#endif
 
     // ----------------------------------------------------------------------------
 
