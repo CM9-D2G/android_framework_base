@@ -132,6 +132,15 @@ public:
         NUM_STREAM_TYPES
     };
 
+    enum audio_in_acoustics {
+        AGC_ENABLE    = 0x0001,
+        AGC_DISABLE   = 0,
+        NS_ENABLE     = 0x0002,
+        NS_DISABLE    = 0,
+        TX_IIR_ENABLE = 0x0004,
+        TX_DISABLE    = 0
+    };
+
 #endif
     /* These are static methods to control the system-wide AudioFlinger
      * only privileged processes can have access to them
