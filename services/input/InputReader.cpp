@@ -19,22 +19,22 @@
 //#define LOG_NDEBUG 0
 
 // Log debug messages for each raw event received from the EventHub.
-#define DEBUG_RAW_EVENTS 0
+//#define DEBUG_RAW_EVENTS 0
 
 // Log debug messages about touch screen filtering hacks.
-#define DEBUG_HACKS 0
+//#define DEBUG_HACKS 0
 
 // Log debug messages about virtual key processing.
-#define DEBUG_VIRTUAL_KEYS 0
+//#define DEBUG_VIRTUAL_KEYS 0
 
 // Log debug messages about pointers.
-#define DEBUG_POINTERS 0
+//#define DEBUG_POINTERS 0
 
 // Log debug messages about pointer assignment calculations.
-#define DEBUG_POINTER_ASSIGNMENT 0
+//#define DEBUG_POINTER_ASSIGNMENT 0
 
 // Log debug messages about gesture detection.
-#define DEBUG_GESTURES 0
+//#define DEBUG_GESTURES 0
 
 #include "InputReader.h"
 
@@ -645,7 +645,11 @@ int32_t InputReader::getStateLocked(int32_t deviceId, uint32_t sourceMask, int32
             InputDevice* device = mDevices.valueAt(i);
             if (! device->isIgnored() && sourcesMatchMask(device->getSources(), sourceMask)) {
                 result = (device->*getStateFunc)(sourceMask, code);
+#ifdef BOARD_USES_KEYBOARD_HACK
+                if (result >= AKEY_STATE_UP) {
+#else
                 if (result >= AKEY_STATE_DOWN) {
+#endif
                     return result;
                 }
             }
@@ -1005,7 +1009,11 @@ void InputDevice::process(const RawEvent* rawEvents, size_t count) {
                     mapper->process(&event);
                 }
 
-                LOGD("Fake event sent, touch=%d !", touched);
+#if DEBUG_RAW_EVENTS
+                LOGD("Fake event sent, touch=%d :: Input event: device=%d type=0x%04x scancode=0x%04x "
+                "keycode=0x%04x value=0x%08x flags=0x%08x!", touched, rawEvent->deviceId, rawEvent->type, rawEvent->scanCode, rawEvent->keyCode,
+                rawEvent->value, rawEvent->flags);
+#endif
             }
             else
 #endif //LEGACY_TOUCHSCREEN
@@ -1057,7 +1065,11 @@ int32_t InputDevice::getState(uint32_t sourceMask, int32_t code, GetStateFunc ge
         InputMapper* mapper = mMappers[i];
         if (sourcesMatchMask(mapper->getSources(), sourceMask)) {
             result = (mapper->*getStateFunc)(sourceMask, code);
+#ifdef BOARD_USES_KEYBOARD_HACK
             if (result >= AKEY_STATE_DOWN) {
+#else
+            if (result >= AKEY_STATE_UP) {
+#endif
                 return result;
             }
         }

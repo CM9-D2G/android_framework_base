@@ -148,7 +148,7 @@ typedef void* GLeglImageOES;
 
 /* GL_OES_EGL_image_external */
 #ifndef GL_OES_EGL_image_external
-#ifdef BOARD_GL_OES_EGL_IMG_EXTERNAL_HACK
+#ifdef MISSING_EGL_EXTERNAL_IMAGE
 #define GL_TEXTURE_EXTERNAL_OES                                 0x0DE1
 #else
 #define GL_TEXTURE_EXTERNAL_OES                                 0x8D65

@@ -145,6 +145,9 @@ import java.util.List;
 public class WindowManagerService extends IWindowManager.Stub
         implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs {
     static final String TAG = "WindowManager";
+
+    static final boolean BOARD_USES_KEYBOARD_HACK = true;
+
     static final boolean DEBUG = false;
     static final boolean DEBUG_ADD_REMOVE = false;
     static final boolean DEBUG_FOCUS = false;
@@ -5973,7 +5976,11 @@ public class WindowManagerService extends IWindowManager.Stub
         config.screenLayout = screenLayout;
 
         // Determine whether a hard keyboard is available and enabled.
+        
         boolean hardKeyboardAvailable = config.keyboard == Configuration.KEYBOARD_NOKEYS;
+        if (BOARD_USES_KEYBOARD_HACK) {
+            hardKeyboardAvailable = config.keyboard != Configuration.KEYBOARD_NOKEYS;
+        }
         if (hardKeyboardAvailable != mHardKeyboardAvailable) {
             mHardKeyboardAvailable = hardKeyboardAvailable;
             mHardKeyboardEnabled = hardKeyboardAvailable;

@@ -1487,9 +1487,9 @@ sp<AudioFlinger::PlaybackThread::Track>  AudioFlinger::PlaybackThread::createTra
     if (mType == DIRECT) {
         if ((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_PCM) {
             if (sampleRate != mSampleRate || format != mFormat || channelMask != mChannelMask) {
-                LOGE("createTrack_l() Bad parameter: sampleRate %d format %d, channelMask 0x%08x \""
+                LOGE("createTrack_l() Bad parameter: sampleRate %d/%d format %d/%d, channelMask 0x%08x/0x%08x \""
                         "for output %p with format %d",
-                        sampleRate, format, channelMask, mOutput, mFormat);
+                        sampleRate, mSampleRate, format, mFormat, channelMask, mChannelMask, mOutput, mFormat);
                 lStatus = BAD_VALUE;
                 goto Exit;
             }
@@ -1716,6 +1716,8 @@ void AudioFlinger::PlaybackThread::readOutputParameters()
     mFormat = mOutput->stream->common.get_format(&mOutput->stream->common);
     mFrameSize = (uint16_t)audio_stream_frame_size(&mOutput->stream->common);
     mFrameCount = mOutput->stream->common.get_buffer_size(&mOutput->stream->common) / mFrameSize;
+
+    LOGE("PlaybackThread::readOutputParameters, mSampleRate %d, mChannelMask 0x%08x, mChannelCount %d, mFormat %d, mFrameSize, %d, mFrameCount %d", mSampleRate, mChannelMask, mChannelCount, mFormat, mFrameSize, mFrameCount);
 
     // FIXME - Current mixer implementation only supports stereo output: Always
     // Allocate a stereo buffer even if HW output is mono.
