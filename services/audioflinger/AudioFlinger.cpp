@@ -1486,7 +1486,11 @@ sp<AudioFlinger::PlaybackThread::Track>  AudioFlinger::PlaybackThread::createTra
 
     if (mType == DIRECT) {
         if ((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_PCM) {
+#ifdef BOARD_USES_AUDIO_LEGACY
+            if (sampleRate != mSampleRate || format != mFormat || (channelMask & mChannelMask) == channelMask) {
+#else
             if (sampleRate != mSampleRate || format != mFormat || channelMask != mChannelMask) {
+#endif
                 LOGE("createTrack_l() Bad parameter: sampleRate %d/%d format %d/%d, channelMask 0x%08x/0x%08x \""
                         "for output %p with format %d",
                         sampleRate, mSampleRate, format, mFormat, channelMask, mChannelMask, mOutput, mFormat);
