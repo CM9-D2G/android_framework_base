@@ -149,8 +149,6 @@ import java.util.ArrayList;
  * of both of those when held.
  */
 public class PhoneWindowManager implements WindowManagerPolicy {
-    static final boolean BOARD_USES_KEYBOARD_HACK = true;
-
     static final String TAG = "WindowManager";
     static final boolean DEBUG = false;
     static final boolean localLOGV = false;
@@ -1033,22 +1031,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     void readLidState() {
         try {
             int sw = mWindowManager.getSwitchState(SW_LID);
-            if (BOARD_USES_KEYBOARD_HACK) {
-                if (sw > 0) {
-                    mLidOpen = LID_CLOSED;
-                } else if (sw == 0) {
-                    mLidOpen = LID_OPEN;
-                } else {
-                    mLidOpen = LID_ABSENT;
-                }
+            if (sw > 0) {
+                mLidOpen = LID_OPEN;
+            } else if (sw == 0) {
+                mLidOpen = LID_CLOSED;
             } else {
-                if (sw > 0) {
-                    mLidOpen = LID_OPEN;
-                } else if (sw == 0) {
-                    mLidOpen = LID_CLOSED;
-                } else {
-                    mLidOpen = LID_ABSENT;
-                }
+                mLidOpen = LID_ABSENT;
             }
         } catch (RemoteException e) {
             // Ignore
