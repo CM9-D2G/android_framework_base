@@ -1899,6 +1899,7 @@ void KeyboardInputMapper::reset(nsecs_t when) {
 }
 
 void KeyboardInputMapper::process(const RawEvent* rawEvent) {
+    // LOGE("process(), type=%d, keyCode=%d, scanCode=%d, flags=0x%08x", rawEvent->type, rawEvent->keyCode, rawEvent->scanCode, rawEvent->flags);
     switch (rawEvent->type) {
     case EV_KEY: {
         int32_t scanCode = rawEvent->scanCode;
