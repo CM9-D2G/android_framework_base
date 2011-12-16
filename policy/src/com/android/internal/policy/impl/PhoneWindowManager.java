@@ -3110,10 +3110,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     @Override
     public int rotationForOrientationLw(int orientation, int lastRotation) {
-        if (false) {
-            Slog.v(TAG, "rotationForOrientationLw(orient="
+        if (true) {
+            Slog.e(TAG, "rotationForOrientationLw(orient="
                         + orientation + ", last=" + lastRotation
-                        + "); user=" + mUserRotation + " "
+                        + ", hdmiPlugged=" + mHdmiPlugged + ", mLidOpen=" + mLidOpen + ", mDockMode=" + mDockMode + ", mAccelerometerDefault=" + mAccelerometerDefault + "); user=" + mUserRotation + " "
                         + ((mUserRotationMode == WindowManagerPolicy.USER_ROTATION_LOCKED)
                             ? "USER_ROTATION_LOCKED" : "")
                         );

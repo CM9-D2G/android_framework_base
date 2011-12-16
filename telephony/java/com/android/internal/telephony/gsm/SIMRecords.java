@@ -1261,8 +1261,10 @@ public class SIMRecords extends IccRecords {
 
         recordsLoadedRegistrants.notifyRegistrants(
             new AsyncResult(null, null, null));
-        phone.mIccCard.broadcastIccStateChangedIntent(
-                SimCard.INTENT_VALUE_ICC_LOADED, null);
+        if (phone.mIccCard != null) {
+            phone.mIccCard.broadcastIccStateChangedIntent(
+                    SimCard.INTENT_VALUE_ICC_LOADED, null);
+        }
     }
 
     //***** Private methods
