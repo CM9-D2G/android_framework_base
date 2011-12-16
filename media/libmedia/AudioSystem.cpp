@@ -24,7 +24,7 @@
 #include <math.h>
 
 #include <system/audio.h>
-#ifdef BOARD_USES_LEGACY_AUDIO
+#ifdef USES_LEGACY_AUDIO
 #include <media/AudioParameter.h>
 #endif
 
@@ -753,7 +753,7 @@ void AudioSystem::AudioPolicyServiceClient::binderDied(const wp<IBinder>& who) {
     LOGW("AudioPolicyService server died!");
 }
 
-#ifdef BOARD_USES_AUDIO_LEGACY
+#ifdef USES_AUDIO_LEGACY
 // use emulated popcount optimization
 // http://www.df.lth.se/~john_e/gems/gem002d.html
 uint32_t AudioSystem::popCount(uint32_t u)
@@ -766,10 +766,12 @@ uint32_t AudioSystem::popCount(uint32_t u)
     return u;
 }
 
-bool AudioSystem::isOutputDevice(audio_devices device)
+bool AudioSystem::isA2dpDevice(audio_devices device)
 {
     if ((popCount(device) == 1 ) &&
-        ((device & ~AUDIO_DEVICE_OUT_ALL) == 0)) {
+        (device & (AUDIO_DEVICE_OUT_BLUETOOTH_A2DP |
+                   AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES |
+                   AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER))) {
         return true;
     } else {
         return false;
@@ -780,6 +782,16 @@ bool AudioSystem::isInputDevice(audio_devices device)
 {
     if ((popCount(device) == 1 ) &&
         ((device & ~AUDIO_DEVICE_IN_ALL) == 0)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AudioSystem::isOutputDevice(audio_devices device)
+{
+    if ((popCount(device) == 1 ) &&
+        ((device & ~AUDIO_DEVICE_OUT_ALL) == 0)) {
         return true;
     } else {
         return false;
@@ -797,18 +809,6 @@ bool AudioSystem::isFmDevice(audio_devices device)
     }
 }
 #endif
-
-bool AudioSystem::isA2dpDevice(audio_devices device)
-{
-    if ((popCount(device) == 1 ) &&
-        (device & (AUDIO_DEVICE_OUT_BLUETOOTH_A2DP |
-                   AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES |
-                   AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER))) {
-        return true;
-    } else {
-        return false;
-    }
-}
 
 bool AudioSystem::isBluetoothScoDevice(audio_devices device)
 {
@@ -846,6 +846,7 @@ bool AudioSystem::isInputChannel(uint32_t channel)
 bool AudioSystem::isOutputChannel(uint32_t channel)
 {
     if ((channel & ~AUDIO_CHANNEL_OUT_ALL) == 0) {
+
         return true;
     } else {
         return false;
@@ -893,6 +894,7 @@ AudioSystem::device_connection_state AudioSystem::getDeviceConnectionState(audio
 }
 
 
+/*
 const char *AudioParameter::keyRouting = "routing";
 const char *AudioParameter::keySamplingRate = "sampling_rate";
 const char *AudioParameter::keyFormat = "format";
@@ -1045,8 +1047,9 @@ status_t AudioParameter::getAt(size_t index, String8& key, String8& value)
         return BAD_VALUE;
     }
 }
+*/
 
-#endif /* BOARD_USES_AUDIO_LEGACY */
+#endif /* USES_AUDIO_LEGACY */
 
 }; // namespace android
 

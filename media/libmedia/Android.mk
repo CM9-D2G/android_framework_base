@@ -2,8 +2,6 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES:= \
-    AudioParameter.cpp
 LOCAL_MODULE:= libmedia_helper
 LOCAL_MODULE_TAGS := optional
 
@@ -46,10 +44,21 @@ LOCAL_SRC_FILES:= \
     MemoryLeakTrackUtil.cpp \
     fixedfft.cpp.arm
 
+ifeq ($(BOARD_USES_AUDIO_LEGACY),true)
+    LOCAL_SRC_FILES+= \
+        AudioParameter.cpp
+
+    LOCAL_CFLAGS += -DUSES_AUDIO_LEGACY
+    ifeq ($(BOARD_USE_KINETO_COMPATIBILITY),true)
+        LOCAL_CFLAGS += -DUSE_KINETO_COMPATIBILITY
+    endif
+endif
+
 LOCAL_SHARED_LIBRARIES := \
 	libui libcutils libutils libbinder libsonivox libicuuc libexpat \
         libcamera_client libstagefright_foundation \
         libgui libdl
+
 
 LOCAL_WHOLE_STATIC_LIBRARY := libmedia_helper
 
