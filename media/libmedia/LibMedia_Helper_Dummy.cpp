@@ -19,9 +19,11 @@
 
 namespace android {
 
-LibMediaHelperDummy::Dummy()
-{
-}
+class LibMediaHelperDummy {
+public:
+    LibMediaHelperDummy() {}
+
+};
 
 };  // namespace android
 
