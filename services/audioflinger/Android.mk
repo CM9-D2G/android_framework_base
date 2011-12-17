@@ -24,9 +24,14 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libpowermanager
 
+ifeq ($(BOARD_USES_AUDIO_LEGACY),true)
+LOCAL_STATIC_LIBRARIES := \
+    libcpustats
+else
 LOCAL_STATIC_LIBRARIES := \
     libcpustats \
     libmedia_helper
+endif
 
 LOCAL_MODULE:= libaudioflinger
 
