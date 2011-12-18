@@ -756,6 +756,7 @@ void AudioSystem::AudioPolicyServiceClient::binderDied(const wp<IBinder>& who) {
 #ifdef USES_AUDIO_LEGACY
 // use emulated popcount optimization
 // http://www.df.lth.se/~john_e/gems/gem002d.html
+/*
 uint32_t AudioSystem::popCount(uint32_t u)
 {
     u = ((u&0x55555555) + ((u>>1)&0x55555555));
@@ -892,162 +893,66 @@ AudioSystem::device_connection_state AudioSystem::getDeviceConnectionState(audio
                                                   const char *device_address) {
     return (device_connection_state)getDeviceConnectionState((audio_devices_t)device, device_address);
 }
-
-
-/*
-const char *AudioParameter::keyRouting = "routing";
-const char *AudioParameter::keySamplingRate = "sampling_rate";
-const char *AudioParameter::keyFormat = "format";
-const char *AudioParameter::keyChannels = "channels";
-const char *AudioParameter::keyFrameCount = "frame_count";
-const char *AudioParameter::keyInputSource = "input_source";
-
-AudioParameter::AudioParameter(const String8& keyValuePairs)
-{
-    char *str = new char[keyValuePairs.length()+1];
-    mKeyValuePairs = keyValuePairs;
-
-    strcpy(str, keyValuePairs.string());
-    char *pair = strtok(str, ";");
-    while (pair != NULL) {
-        if (strlen(pair) != 0) {
-            size_t eqIdx = strcspn(pair, "=");
-            String8 key = String8(pair, eqIdx);
-            String8 value;
-            if (eqIdx == strlen(pair)) {
-                value = String8("");
-            } else {
-                value = String8(pair + eqIdx + 1);
-            }
-            if (mParameters.indexOfKey(key) < 0) {
-                mParameters.add(key, value);
-            } else {
-                mParameters.replaceValueFor(key, value);
-            }
-        } else {
-            LOGV("AudioParameter() cstor empty key value pair");
-        }
-        pair = strtok(NULL, ";");
-    }
-
-    delete[] str;
-}
-
-AudioParameter::~AudioParameter()
-{
-    mParameters.clear();
-}
-
-String8 AudioParameter::toString()
-{
-    String8 str = String8("");
-
-    size_t size = mParameters.size();
-    for (size_t i = 0; i < size; i++) {
-        str += mParameters.keyAt(i);
-        str += "=";
-        str += mParameters.valueAt(i);
-        if (i < (size - 1)) str += ";";
-    }
-    return str;
-}
-
-status_t AudioParameter::add(const String8& key, const String8& value)
-{
-    if (mParameters.indexOfKey(key) < 0) {
-        mParameters.add(key, value);
-        return NO_ERROR;
-    } else {
-        mParameters.replaceValueFor(key, value);
-        return ALREADY_EXISTS;
-    }
-}
-
-status_t AudioParameter::addInt(const String8& key, const int value)
-{
-    char str[12];
-    if (snprintf(str, 12, "%d", value) > 0) {
-        String8 str8 = String8(str);
-        return add(key, str8);
-    } else {
-        return BAD_VALUE;
-    }
-}
-
-status_t AudioParameter::addFloat(const String8& key, const float value)
-{
-    char str[23];
-    if (snprintf(str, 23, "%.10f", value) > 0) {
-        String8 str8 = String8(str);
-        return add(key, str8);
-    } else {
-        return BAD_VALUE;
-    }
-}
-
-status_t AudioParameter::remove(const String8& key)
-{
-    if (mParameters.indexOfKey(key) >= 0) {
-        mParameters.removeItem(key);
-        return NO_ERROR;
-    } else {
-        return BAD_VALUE;
-    }
-}
-
-status_t AudioParameter::get(const String8& key, String8& value)
-{
-    if (mParameters.indexOfKey(key) >= 0) {
-        value = mParameters.valueFor(key);
-        return NO_ERROR;
-    } else {
-        return BAD_VALUE;
-    }
-}
-
-status_t AudioParameter::getInt(const String8& key, int& value)
-{
-    String8 str8;
-    status_t result = get(key, str8);
-    value = 0;
-    if (result == NO_ERROR) {
-        int val;
-        if (sscanf(str8.string(), "%d", &val) == 1) {
-            value = val;
-        } else {
-            result = INVALID_OPERATION;
-        }
-    }
-    return result;
-}
-
-status_t AudioParameter::getFloat(const String8& key, float& value)
-{
-    String8 str8;
-    status_t result = get(key, str8);
-    value = 0;
-    if (result == NO_ERROR) {
-        float val;
-        if (sscanf(str8.string(), "%f", &val) == 1) {
-            value = val;
-        } else {
-            result = INVALID_OPERATION;
-        }
-    }
-    return result;
-}
-
-status_t AudioParameter::getAt(size_t index, String8& key, String8& value)
-{
-    if (mParameters.size() > index) {
-        key = mParameters.keyAt(index);
-        value = mParameters.valueAt(index);
-        return NO_ERROR;
-    } else {
-        return BAD_VALUE;
-    }
-}
 */
+#ifdef USES_AUDIO_LEGACY
+extern "C" uint32_t _ZN7android11AudioSystem8popCountEj(uint32_t u)
+{
+    return popcount(u);
+}
+
+extern "C" bool _ZN7android11AudioSystem12isA2dpDeviceENS0_13audio_devicesE(uint32_t device)
+{
+    return audio_is_a2dp_device((audio_devices_t)device);
+}
+
+extern "C" bool _ZN7android11AudioSystem13isInputDeviceENS0_13audio_devicesE(uint32_t device)
+{
+    return audio_is_input_device((audio_devices_t)device);
+}
+
+extern "C" bool _ZN7android11AudioSystem14isOutputDeviceENS0_13audio_devicesE(uint32_t device)
+{
+    return audio_is_output_device((audio_devices_t)device);
+}
+
+extern "C" bool _ZN7android11AudioSystem20isBluetoothScoDeviceENS0_13audio_devicesE(uint32_t device)
+{
+    return audio_is_bluetooth_sco_device((audio_devices_t)device);
+}
+
+extern "C" status_t _ZN7android11AudioSystem24setDeviceConnectionStateENS0_13audio_devicesENS0_23device_connection_stateEPKc(audio_devices_t device,
+                                               audio_policy_dev_state_t state,
+                                               const char *device_address)
+{
+    return AudioSystem::setDeviceConnectionState(device, state, device_address);
+}
+
+extern "C" audio_io_handle_t _ZN7android11AudioSystem9getOutputENS0_11stream_typeEjjjNS0_12output_flagsE(audio_stream_type_t stream,
+                                    uint32_t samplingRate,
+                                    uint32_t format,
+                                    uint32_t channels,
+                                    audio_policy_output_flags_t flags)
+{
+   return AudioSystem::getOutput(stream,samplingRate,format,channels>>2,flags);
+}
+
+extern "C" bool _ZN7android11AudioSystem11isLinearPCMEj(uint32_t format)
+{
+    return audio_is_linear_pcm(format);
+}
+
+extern "C" bool _ZN7android11AudioSystem15isLowVisibilityENS0_11stream_typeE(audio_stream_type_t stream)
+{
+    if (stream == AUDIO_STREAM_SYSTEM ||
+        stream == AUDIO_STREAM_NOTIFICATION ||
+        stream == AUDIO_STREAM_RING) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+#endif // AUDIO_LEGACY
 
 #endif /* USES_AUDIO_LEGACY */
 
