@@ -756,7 +756,6 @@ void AudioSystem::AudioPolicyServiceClient::binderDied(const wp<IBinder>& who) {
 #ifdef USES_AUDIO_LEGACY
 // use emulated popcount optimization
 // http://www.df.lth.se/~john_e/gems/gem002d.html
-/*
 uint32_t AudioSystem::popCount(uint32_t u)
 {
     u = ((u&0x55555555) + ((u>>1)&0x55555555));
@@ -893,8 +892,8 @@ AudioSystem::device_connection_state AudioSystem::getDeviceConnectionState(audio
                                                   const char *device_address) {
     return (device_connection_state)getDeviceConnectionState((audio_devices_t)device, device_address);
 }
-*/
-#ifdef USES_AUDIO_LEGACY
+
+/*
 extern "C" uint32_t _ZN7android11AudioSystem8popCountEj(uint32_t u)
 {
     return popcount(u);
@@ -951,8 +950,7 @@ extern "C" bool _ZN7android11AudioSystem15isLowVisibilityENS0_11stream_typeE(aud
         return false;
     }
 }
-
-#endif // AUDIO_LEGACY
+*/
 
 #endif /* USES_AUDIO_LEGACY */
 
