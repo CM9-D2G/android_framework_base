@@ -1889,6 +1889,15 @@ public final class Settings {
         public static final String POINTER_SPEED = "pointer_speed";
 
         /**
+         * GLOBAL_PHONE_SIM_ABSENT_TAG setting
+         * This is an integer value in a range between 0 and 1
+         *    0 = Absent
+         *    1 = Present
+         * @hide
+         */
+        public static final String GLOBAL_PHONE_SIM_ABSENT_TAG = "GlobalPhoneRadioOffSimAbsentState";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
