@@ -96,6 +96,12 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
     private boolean mReregisterOnReconnectFailure = false;
     private ContentResolver mResolver;
 
+    /* BEGIN: MOTOROLA */
+    private boolean mIsNewArch = false;
+    private boolean mIsSwitchedToCdma;
+    private int mOwnerModemId;
+    /* END: MOTOROLA */
+
     // Recovery action taken in case of data stall
     class RecoveryAction {
         public static final int GET_DATA_CALL_LIST      = 0;
@@ -157,42 +163,70 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
     private ApnChangeObserver mApnObserver;
 
     //***** Constructor
+    public GsmDataConnectionTracker(int ownerModemId, PhoneBase p) {
+        super(p);
+        mIsNewArch = true;
+        // mIccCardManager = IccCardManager.getInstance();
+        mOwnerModemId = ownerModemId;
+    }
 
     public GsmDataConnectionTracker(PhoneBase p) {
         super(p);
+        activateMe();
+    }
 
-        p.mCM.registerForAvailable (this, EVENT_RADIO_AVAILABLE, null);
-        p.mCM.registerForOffOrNotAvailable(this, EVENT_RADIO_OFF_OR_NOT_AVAILABLE, null);
-        p.mIccRecords.registerForRecordsLoaded(this, EVENT_RECORDS_LOADED, null);
-        p.mCM.registerForDataNetworkStateChanged (this, EVENT_DATA_STATE_CHANGED, null);
-        p.getCallTracker().registerForVoiceCallEnded (this, EVENT_VOICE_CALL_ENDED, null);
-        p.getCallTracker().registerForVoiceCallStarted (this, EVENT_VOICE_CALL_STARTED, null);
-        p.getServiceStateTracker().registerForDataConnectionAttached(this,
+    public GsmDataConnectionTracker(boolean worldPhoneFlag, boolean switchToCDMAFlag, PhoneBase p) {
+        super(p);
+        if (!worldPhoneFlag) {
+            Log.e(LOG_TAG, "GsmDataConnectionTrackerExt, this shouldn't be called.");
+            return;
+        }
+        if (!switchToCDMAFlag) {
+            mIsSwitchedToCdma = true;
+            switchToGsm();
+        }
+        else {
+            mIsSwitchedToCdma = true;
+        }
+    }
+
+    private void activateMe() {
+        mPhone.mCM.registerForAvailable (this, EVENT_RADIO_AVAILABLE, null);
+        mPhone.mCM.registerForOffOrNotAvailable(this, EVENT_RADIO_OFF_OR_NOT_AVAILABLE, null);
+        mPhone.mIccRecords.registerForRecordsLoaded(this, EVENT_RECORDS_LOADED, null);
+        mPhone.mCM.registerForDataNetworkStateChanged (this, EVENT_DATA_STATE_CHANGED, null);
+        mPhone.getCallTracker().registerForVoiceCallEnded (this, EVENT_VOICE_CALL_ENDED, null);
+        mPhone.getCallTracker().registerForVoiceCallStarted (this, EVENT_VOICE_CALL_STARTED, null);
+        mPhone.getServiceStateTracker().registerForDataConnectionAttached(this,
                 EVENT_DATA_CONNECTION_ATTACHED, null);
-        p.getServiceStateTracker().registerForDataConnectionDetached(this,
+        mPhone.getServiceStateTracker().registerForDataConnectionDetached(this,
                 EVENT_DATA_CONNECTION_DETACHED, null);
-        p.getServiceStateTracker().registerForRoamingOn(this, EVENT_ROAMING_ON, null);
-        p.getServiceStateTracker().registerForRoamingOff(this, EVENT_ROAMING_OFF, null);
-        p.getServiceStateTracker().registerForPsRestrictedEnabled(this,
+        mPhone.getServiceStateTracker().registerForRoamingOn(this, EVENT_ROAMING_ON, null);
+        mPhone.getServiceStateTracker().registerForRoamingOff(this, EVENT_ROAMING_OFF, null);
+        mPhone.getServiceStateTracker().registerForPsRestrictedEnabled(this,
                 EVENT_PS_RESTRICT_ENABLED, null);
-        p.getServiceStateTracker().registerForPsRestrictedDisabled(this,
+        mPhone.getServiceStateTracker().registerForPsRestrictedDisabled(this,
                 EVENT_PS_RESTRICT_DISABLED, null);
 
         // install reconnect intent filter for this data connection.
         IntentFilter filter = new IntentFilter();
         filter.addAction(INTENT_DATA_STALL_ALARM);
-        p.getContext().registerReceiver(mIntentReceiver, filter, null, p);
+        mPhone.getContext().registerReceiver(mIntentReceiver, filter, null, mPhone);
 
         mDataConnectionTracker = this;
         mResolver = mPhone.getContext().getContentResolver();
 
         mApnObserver = new ApnChangeObserver();
-        p.getContext().getContentResolver().registerContentObserver(
+        mPhone.getContext().getContentResolver().registerContentObserver(
                 Telephony.Carriers.CONTENT_URI, true, mApnObserver);
 
         mApnContexts = new ConcurrentHashMap<String, ApnContext>();
         initApnContextsAndDataConnection();
         broadcastMessenger();
+    }
+
+    public void activate() {
+        activateMe();
     }
 
     @Override
@@ -219,6 +253,25 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
         mApnContexts.clear();
 
         destroyDataConnections();
+    }
+
+    public void deactivate() {
+        dispose();
+    }
+
+
+    public void switchToCdma() {
+        if (!mIsSwitchedToCdma) {
+            mIsSwitchedToCdma = true;
+            dispose();
+        }
+    }
+
+    public void switchToGsm() {
+        if (mIsSwitchedToCdma) {
+            mIsSwitchedToCdma = false;
+            activateMe();
+        }
     }
 
     @Override
