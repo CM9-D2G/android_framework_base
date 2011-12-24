@@ -264,6 +264,10 @@ public class WindowManagerService extends IWindowManager.Stub
     private static final int ALLOW_DISABLE_UNKNOWN = -1; // check with DevicePolicyManager
     private int mAllowDisableKeyguard = ALLOW_DISABLE_UNKNOWN; // sync'd by mKeyguardTokenWatcher
 
+    // Useful scan codes.
+    private static final int SW_LID = 0x00;
+    private static final int BTN_MOUSE = 0x110;
+
     final TokenWatcher mKeyguardTokenWatcher = new TokenWatcher(
             new Handler(), "WindowManagerService.mKeyguardTokenWatcher") {
         public void acquired() {
@@ -6083,8 +6087,18 @@ public class WindowManagerService extends IWindowManager.Stub
         config.compatScreenHeightDp = (int)(config.screenHeightDp / mCompatibleScreenScale);
         config.compatSmallestScreenWidthDp = computeCompatSmallestWidth(rotated, dm, dw, dh);
 
+
         // Determine whether a hard keyboard is available and enabled.
-        boolean hardKeyboardAvailable = config.keyboard == Configuration.KEYBOARD_NOKEYS;
+
+        // Check lidState
+        int sw = 1;
+        try {
+            sw = getSwitchState(SW_LID);
+        } catch (Exception e) {
+            // Ignore
+        }
+        boolean hardKeyboardAvailable = ((sw == 0) || (config.keyboard == Configuration.KEYBOARD_NOKEYS));
+
         if (hardKeyboardAvailable != mHardKeyboardAvailable) {
             mHardKeyboardAvailable = hardKeyboardAvailable;
             mHardKeyboardEnabled = hardKeyboardAvailable;
