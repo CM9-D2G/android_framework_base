@@ -259,7 +259,7 @@ public class StorageNotification extends StorageEventListener {
      */
     void updateUsbMassStorageNotification(boolean available) {
 
-        if (available) {
+        if (available && SystemProperties.getInt("ro.usb.use_custom_service", 0) == 0) {
             Intent intent = new Intent();
             intent.setClass(mContext, com.android.systemui.usb.UsbStorageActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -282,6 +282,10 @@ public class StorageNotification extends StorageEventListener {
             boolean sound, boolean visible, PendingIntent pi) {
 
         if (!visible && mUsbStorageNotification == null) {
+            return;
+        }
+
+        if (SystemProperties.getInt("ro.usb.use_custom_service", 0) == 1) {
             return;
         }
 
