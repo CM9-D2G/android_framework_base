@@ -388,7 +388,8 @@ public class CdmaServiceStateTracker extends ServiceStateTracker {
                     mIsMinInfoReady = true;
 
                     updateOtaspState();
-                    phone.getIccCard().broadcastIccStateChangedIntent(IccCard.INTENT_VALUE_ICC_IMSI,
+                    if (phone.getIccCard()) != null)
+                        phone.getIccCard().broadcastIccStateChangedIntent(IccCard.INTENT_VALUE_ICC_IMSI,
                             null);
                 } else {
                     if (DBG) {
