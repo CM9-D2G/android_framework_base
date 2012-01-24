@@ -1294,6 +1294,7 @@ class MountService extends IMountService.Stub
             for(MountServiceBinderListener bl : mListeners) {
                 if (bl.mListener == listener) {
                     mListeners.remove(mListeners.indexOf(bl));
+                    listener.asBinder().unlinkToDeath(bl, 0);
                     return;
                 }
             }
