@@ -24,6 +24,13 @@
          all of the currently visible notifications. [CHAR LIMIT=10]-->
     <string name="status_bar_clear_all_button">Clear</string>
 
+    <!-- Title for the pseudo-notification shown when notifications are disabled (do-not-disturb
+         mode) -->
+    <string name="notifications_off_title">Notifications off</string>
+
+    <!-- Content text for do-not-disturb mode notification -->
+    <string name="notifications_off_text">Touch to enable notifications.</string>
+
     <!-- The text for the button in the notification window-shade that turns
          on do not disturb mode, where notifications no longer show their ticker,
          no sound plays, and no icons are visible.  The windowshade continues to show
@@ -95,6 +102,9 @@
 
     <!-- Name of the button that links to the Wifi settings screen. [CHAR LIMIT=NONE] -->
     <string name="status_bar_settings_wifi_button">Wi-Fi</string>
+
+    <!-- Name of the button that links to the Bluetooth settings screen. [CHAR LIMIT=NONE] -->
+    <string name="status_bar_settings_bluetooth_button">Bluetooth</string>
 
     <!-- Label in the system panel for airplane mode (all radios are turned off)[CHAR LIMIT=30] -->
     <string name="status_bar_settings_airplane">Airplane mode</string>
