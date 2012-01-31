@@ -3199,7 +3199,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     @Override
     public int rotationForOrientationLw(int orientation, int lastRotation) {
-        if (true) {
+        if (false) {
             Slog.e(TAG, "rotationForOrientationLw(orient="
                         + orientation + ", last=" + lastRotation
                         + ", hdmiPlugged=" + mHdmiPlugged + ", mLidOpen=" + mLidOpen + ", mDockMode=" + mDockMode + ", mAccelerometerDefault=" + mAccelerometerDefault + "); user=" + mUserRotation + " "
