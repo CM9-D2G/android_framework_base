@@ -469,8 +469,8 @@ static void correctThresh(PSY_OUT_CHANNEL  psyOutChannel[MAX_CHANNELS],
         /* pe difference for this sfb */
         deltaSfbPe = *psfbPeFactors * deltaPe;
 
-		/* thr3(n) = thr2(n)*2^deltaSfbPe/b(n) */         
-        if (*psfbNActiveLines > 0) {
+		/* thr3(n) = thr2(n)*2^deltaSfbPe/b(n) */
+        if (*psfbNActiveLines > 0 && (normFactor* (*psfbNActiveLines)) != 0) {
           /* new threshold */
           Word32 thrFactor;
           sfbEn  = psyOutChan->sfbEnergy[sfbGrp+sfb];
