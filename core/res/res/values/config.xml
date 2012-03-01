@@ -733,9 +733,6 @@
     <!-- Timeout to wait for NTP server response. -->
     <integer name="config_ntpTimeout">20000</integer>
 
-    <!-- Use legacy USB device manager. -->
-    <bool name="config_usesLegacyUsbDeviceManager">false</bool>
-
     <!-- Default network policy warning threshold, in megabytes. -->
     <integer name="config_networkPolicyDefaultWarning">2048</integer>
 
@@ -755,6 +752,7 @@
     <!-- Base "touch slop" value used by ViewConfiguration as a
          movement threshold where scrolling should begin. -->
     <dimen name="config_viewConfigurationTouchSlop">8dp</dimen>
+
 
     <!-- CM CHANGES START HERE -->
 

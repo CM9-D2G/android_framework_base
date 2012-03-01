@@ -27,15 +27,13 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.storage.StorageEventListener;
 import android.os.storage.StorageManager;
-import android.os.SystemProperties;
 import android.provider.Settings;
 import android.util.Slog;
 
 public class StorageNotification extends StorageEventListener {
     private static final String TAG = "StorageNotification";
 
-    private static final boolean POP_UMS_ACTIVITY_ON_CONNECT =
-        (SystemProperties.getInt("ro.usb.use_custom_service", 0) == 0);
+    private static final boolean POP_UMS_ACTIVITY_ON_CONNECT = true;
 
     /**
      * Binder context for this service
@@ -259,7 +257,7 @@ public class StorageNotification extends StorageEventListener {
      */
     void updateUsbMassStorageNotification(boolean available) {
 
-        if (available && SystemProperties.getInt("ro.usb.use_custom_service", 0) == 0) {
+        if (available) {
             Intent intent = new Intent();
             intent.setClass(mContext, com.android.systemui.usb.UsbStorageActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -282,10 +280,6 @@ public class StorageNotification extends StorageEventListener {
             boolean sound, boolean visible, PendingIntent pi) {
 
         if (!visible && mUsbStorageNotification == null) {
-            return;
-        }
-
-        if (SystemProperties.getInt("ro.usb.use_custom_service", 0) == 1) {
             return;
         }
 

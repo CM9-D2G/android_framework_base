@@ -49,7 +49,6 @@ LOCAL_SRC_FILES:= \
 	GraphicBufferMapper.cpp \
 	GraphicLog.cpp \
 	InputTransport.cpp \
-	Overlay.cpp \
 	PixelFormat.cpp \
 	Rect.cpp \
 	Region.cpp
@@ -63,10 +62,6 @@ LOCAL_SHARED_LIBRARIES := \
 	libhardware_legacy \
 	libskia \
 	libbinder
-
-ifdef BOARD_EGL_GRALLOC_USAGE_FILTER
-	LOCAL_CFLAGS += -DBOARD_EGL_GRALLOC_USAGE_FILTER=$(BOARD_EGL_GRALLOC_USAGE_FILTER)
-endif
 
 LOCAL_C_INCLUDES := \
     external/skia/include/core

@@ -387,11 +387,8 @@ final class BluetoothAdapterStateMachine extends StateMachine {
                 case USER_TURN_OFF: // ignore
                     break;
                 case POWER_STATE_CHANGED:
-                    if (message.what == 54) {
-                       log("Moto FM Radio");
-                    }
-                    else if ((Boolean) message.obj) {
-                           recoverStateMachine(TURN_HOT, null);
+                    if ((Boolean) message.obj) {
+                        recoverStateMachine(TURN_HOT, null);
                     }
                     break;
                 default:

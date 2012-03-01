@@ -435,7 +435,6 @@ public class UsbManager {
      */
     public void setCurrentFunction(String function, boolean makeDefault) {
         try {
-            Log.e(TAG, "function=" + function + ", makeDefault=" + makeDefault);
             mService.setCurrentFunction(function, makeDefault);
         } catch (RemoteException e) {
             Log.e(TAG, "RemoteException in setCurrentFunction", e);
