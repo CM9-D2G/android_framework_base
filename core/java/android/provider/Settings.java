@@ -2216,7 +2216,7 @@ public final class Settings {
          * 2: show signal text numbers w/small dBm appended
          * @hide
          */
-        public static final String STATUS_BAR_SIGNAL_TEXT = "status_bar_signal";
+        public static final String STATUS_BAR_CM_SIGNAL_TEXT = "status_bar_cm_signal";
 
          /**
          * Whether to control brightness from status bar
