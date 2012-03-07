@@ -75,10 +75,10 @@ Overlay::Overlay(uint32_t width, uint32_t height, OverlayFormats format, overlay
     this->numFreeBuffers = 0;
 
     const int reqd_mem = width * height * getBppFromOverlayFormat(format) >> 3;
-    const int BUFFER_SIZE = reqd_mem + (reqd_mem % PAGE_SIZE);
+    const int BUFFER_SIZE = ((reqd_mem + PAGE_SIZE-1) & ~(PAGE_SIZE-1));
     if (reqd_mem % PAGE_SIZE) {
         // required on tegra2, else only one half of buffers are mapped (atrix)
-        LOGV("%s: buffer size adjusted to be multiple of %d : %d.", __FUNCTION__, PAGE_SIZE, BUFFER_SIZE);
+        LOGD("%s: buffer size %d adjusted to be multiple of %d : %d.", __FUNCTION__, reqd_mem, (int) PAGE_SIZE, BUFFER_SIZE);
     }
 
     int fd = ashmem_create_region("Overlay_buffer_region", NUM_BUFFERS * BUFFER_SIZE);
@@ -100,7 +100,6 @@ Overlay::Overlay(uint32_t width, uint32_t height, OverlayFormats format, overlay
         if (mBuffers[i].ptr == MAP_FAILED) {
             LOGE("%s: Failed to mmap buffer %d", __FUNCTION__, i);
             mBuffers[i].ptr = NULL;
-            continue;
         }
         mQueued[i]=false;
     }
@@ -111,7 +110,30 @@ Overlay::Overlay(uint32_t width, uint32_t height, OverlayFormats format, overlay
     mStatus = NO_ERROR;
 }
 
+void Overlay::destroy() {
+    LOGV("%s", __FUNCTION__);
+    if (mBuffers != NULL) {
+        for(uint32_t i=0; i<NUM_BUFFERS; i++) {
+            if (mBuffers[i].ptr != NULL && munmap(mBuffers[i].ptr, mBuffers[i].length) < 0) {
+                LOGW("%s: unmap of buffer %d failed", __FUNCTION__, i);
+            }
+            mBuffers[i].ptr = NULL;
+            if (mBuffers[i].fd > 0) {
+                close(mBuffers[i].fd);
+            }
+        }
+        delete[] mBuffers;
+        mBuffers=NULL;
+    }
+    delete[] mQueued;
+    pthread_mutex_destroy(&queue_mutex);
+}
+
 Overlay::~Overlay() {
+    if (mBuffers != NULL) {
+        LOGV("%s: Destructor called without freeing buffers, doing it now...", __FUNCTION__);
+        destroy();
+    }
 }
 
 status_t Overlay::dequeueBuffer(overlay_buffer_t* buffer)
@@ -215,32 +237,13 @@ void* Overlay::getBufferAddress(overlay_buffer_t buffer)
 {
     LOGV("%s: %d", __FUNCTION__, (int)buffer);
     if ((uint32_t)buffer >= NUM_BUFFERS) {
-        //return NULL;
-        buffer = (overlay_buffer_t) ((uint32_t)buffer % NUM_BUFFERS);
+        return NULL;
+        //buffer = (overlay_buffer_t) ((uint32_t)buffer % NUM_BUFFERS);
     }
 
     //LOGD("%s: fd=%d, length=%d. offset=%d, ptr=%p", __FUNCTION__, mBuffers[buffer].fd, mBuffers[buffer].length, mBuffers[buffer].offset, mBuffers[buffer].ptr);
 
     return &mBuffers[(uint32_t)buffer];
-}
-
-void Overlay::destroy() {
-    int fd = 0;
-    LOGV("%s", __FUNCTION__);
-    for(uint32_t i=0; i<NUM_BUFFERS; i++) {
-        if (mBuffers[i].ptr != NULL && munmap(mBuffers[i].ptr, mBuffers[i].length) < 0) {
-            LOGW("%s: unmap of buffer %d failed", __FUNCTION__, i);
-        }
-        if (mBuffers[i].fd > 0) {
-            fd = mBuffers[i].fd;
-        }
-    }
-    if (fd > 0) {
-        close(fd);
-    }
-    delete[] mBuffers;
-    delete[] mQueued;
-    pthread_mutex_destroy(&queue_mutex);
 }
 
 status_t Overlay::getStatus() const {
