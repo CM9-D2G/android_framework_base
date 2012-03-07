@@ -104,7 +104,7 @@ private:
     void* hook_data;
 
     // overlay data
-    static const uint32_t NUM_BUFFERS = 6;
+    static const uint32_t NUM_BUFFERS = 8;
     static const uint32_t NUM_MIN_FREE_BUFFERS = 2;
     uint32_t numFreeBuffers;
 
