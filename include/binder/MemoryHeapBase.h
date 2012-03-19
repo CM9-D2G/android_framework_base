@@ -92,7 +92,9 @@ private:
     uint32_t    mFlags;
     const char* mDevice;
     bool        mNeedUnmap;
+#ifndef BINDER_COMPAT
     uint32_t    mOffset;
+#endif
 };
 
 // ---------------------------------------------------------------------------

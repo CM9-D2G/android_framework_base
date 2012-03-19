@@ -153,7 +153,9 @@ status_t MemoryHeapBase::mapfd(int fd, size_t size, uint32_t offset)
     }
     mFD = fd;
     mSize = size;
+#ifndef BINDER_COMPAT
     mOffset = offset;
+#endif
     return NO_ERROR;
 }
 

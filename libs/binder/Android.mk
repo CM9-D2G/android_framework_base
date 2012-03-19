@@ -33,22 +33,19 @@ sources := \
 
 LOCAL_PATH:= $(call my-dir)
 
-# Require a global cflag, lot of modules use binder's .h !
-ifeq ($(BOARD_USE_GINGERBREAD_BINDER),true)
-    binder_cflags := -DBINDER_COMPAT
-endif
+# Note about gingerbread compatibility : Require a global cflag,
+# several projects use binder's IMemory.h and MemoryHeapBase.h
+# COMMON_GLOBAL_CFLAGS += -DBINDER_COMPAT
 
 include $(CLEAR_VARS)
 LOCAL_LDLIBS += -lpthread
 LOCAL_MODULE := libbinder
 LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
 LOCAL_SRC_FILES := $(sources)
-LOCAL_CFLAGS += $(binder_cflags)
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_LDLIBS += -lpthread
 LOCAL_MODULE := libbinder
 LOCAL_SRC_FILES := $(sources)
-LOCAL_CFLAGS += $(binder_cflags)
 include $(BUILD_STATIC_LIBRARY)
