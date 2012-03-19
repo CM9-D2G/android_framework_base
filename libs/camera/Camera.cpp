@@ -15,7 +15,7 @@
 ** limitations under the License.
 */
 
-//#define LOG_NDEBUG 0
+#define LOG_NDEBUG 0
 #define LOG_TAG "Camera"
 #include <utils/Log.h>
 #include <utils/threads.h>
@@ -130,6 +130,10 @@ sp<Camera> Camera::connect(int cameraId)
         c.clear();
     }
     return c;
+}
+
+extern "C" sp<Camera> _ZN7android6Camera7connectEv () {
+    return Camera::connect(0);
 }
 
 void Camera::disconnect()
