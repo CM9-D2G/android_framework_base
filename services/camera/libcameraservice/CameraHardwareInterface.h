@@ -80,11 +80,6 @@ typedef void (*data_callback_timestamp)(nsecs_t timestamp,
 
 class CameraHardwareInterface : public virtual RefBase {
 public:
-    CameraHardwareInterface()
-    {
-        mDevice = 0;
-        mName = "camera";
-    }
     CameraHardwareInterface(const char *name)
     {
         mDevice = 0;
