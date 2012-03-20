@@ -31,6 +31,8 @@
 #include <cutils/properties.h>
 #include <cutils/memory.h>
 
+#include <pixelflinger/format.h>
+
 #include <utils/KeyedVector.h>
 #include <utils/SortedVector.h>
 #include <utils/String8.h>
@@ -334,9 +336,34 @@ EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
         *value = dp->configs[intptr_t(config)].configId;
         return EGL_TRUE;
     }
-    return cnx->egl.eglGetConfigAttrib(
-            dp->disp[ dp->configs[intptr_t(config)].impl ].dpy,
-            dp->configs[intptr_t(config)].config, attribute, value);
+    EGLDisplay iDpy = dp->disp[ dp->configs[intptr_t(config)].impl ].dpy;
+    EGLConfig iConfig = dp->configs[intptr_t(config)].config;
+    EGLBoolean result = cnx->egl.eglGetConfigAttrib(iDpy, iConfig, attribute, value);
+    if (attribute == EGL_NATIVE_VISUAL_ID && *value == 0) {
+        EGLint g,a;
+        cnx->egl.eglGetConfigAttrib(iDpy, iConfig, EGL_GREEN_SIZE, &g);
+        cnx->egl.eglGetConfigAttrib(iDpy, iConfig, EGL_ALPHA_SIZE, &a);
+        if (g == 6 && a == 0) {
+            *value = GGL_PIXEL_FORMAT_RGB_565;
+            return EGL_TRUE;
+        } else if (g == 8 && a == 8) {
+            *value = GGL_PIXEL_FORMAT_BGRA_8888;
+            return EGL_TRUE;
+        } else if (g == 0 && a == 8) {
+            *value = GGL_PIXEL_FORMAT_A_8;
+            return EGL_TRUE;
+        } else if (g == 4 && a == 4) {
+            *value = GGL_PIXEL_FORMAT_RGBA_4444;
+            return EGL_TRUE;
+        } else if (g == 5 && a == 1) {
+            *value = GGL_PIXEL_FORMAT_RGBA_5551;
+            return EGL_TRUE;
+        } else if (g == 8 && a == 0) {
+            *value = GGL_PIXEL_FORMAT_RGB_888;
+            return EGL_TRUE;
+        }
+    }
+    return result;
 }
 
 // ----------------------------------------------------------------------------
@@ -363,8 +390,7 @@ EGLSurface eglCreateWindowSurface(  EGLDisplay dpy, EGLConfig config,
         }
 
         // set the native window's buffers format to match this config
-        if (cnx->egl.eglGetConfigAttrib(iDpy,
-                iConfig, EGL_NATIVE_VISUAL_ID, &format)) {
+        if (eglGetConfigAttrib(dpy, config, EGL_NATIVE_VISUAL_ID, &format)) {
             if (format != 0) {
                 int err = native_window_set_buffers_format(window, format);
                 if (err != 0) {
@@ -928,6 +954,9 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 
 EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface draw)
 {
+    if (!dpy) {
+        LOGW("%s() dpy is null !", __FUNCTION__);
+    }
     EGLBoolean Debug_eglSwapBuffers(EGLDisplay dpy, EGLSurface draw);
     if (gEGLDebugLevel > 0)
         Debug_eglSwapBuffers(dpy, draw);
