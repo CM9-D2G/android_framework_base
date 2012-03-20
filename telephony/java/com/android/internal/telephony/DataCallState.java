@@ -111,7 +111,6 @@ public class DataCallState {
 
         // Start with clean network properties and if we have
         // a failure we'll clear again at the bottom of this code.
-
         if (linkProperties == null)
             linkProperties = new LinkProperties();
         else
@@ -156,12 +155,7 @@ public class DataCallState {
                         }
                     }
                 } else {
-                    // HASHCODE: XT860 needs to skip this exception or bad things happen.  They can use the build.prop setting to do so.
-                    if ("true".equals(SystemProperties.get("ro.telephony.ignore.linkiperror"))) {
-                        Log.e(LOG_TAG, "skipping exception: no address for ifname=" + ifname);
-                    } else {
-                        throw new UnknownHostException("no address for ifname=" + ifname);
-                    }
+                    throw new UnknownHostException("no address for ifname=" + ifname);
                 }
 
                 // set dns servers
