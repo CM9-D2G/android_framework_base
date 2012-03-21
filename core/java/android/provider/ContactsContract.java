@@ -750,7 +750,7 @@ public final class ContactsContract {
         public static final String SYNC3 = "sync3";
         /** Generic column for use by sync adapters. */
         public static final String SYNC4 = "sync4";
-    }    
+    }
 
     /**
      * Columns that appear when each row of a table belongs to a specific
