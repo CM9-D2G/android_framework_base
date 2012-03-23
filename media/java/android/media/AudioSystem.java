@@ -52,6 +52,9 @@ public class AudioSystem
     public static final int STREAM_DTMF = 8;
     /* @hide The audio stream for text to speech (TTS) */
     public static final int STREAM_TTS = 9;
+    /* @hide The audio stream for FM Radio */
+    public static final int STREAM_FM = 10;
+
     /**
      * @deprecated Use {@link #numStreamTypes() instead}
      */
