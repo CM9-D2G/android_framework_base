@@ -965,7 +965,7 @@ bool SurfaceTexture::isExternalFormat(uint32_t format)
     // Legacy/deprecated YUV formats
     case HAL_PIXEL_FORMAT_YCbCr_422_SP:
     case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-    case HAL_PIXEL_FORMAT_YCbCr_422_I:
+//    case HAL_PIXEL_FORMAT_YCbCr_422_I:
         return true;
     }
 
@@ -1115,12 +1115,12 @@ void SurfaceTexture::freeAllBuffersLocked() {
 void SurfaceTexture::freeAllBuffersExceptHeadLocked() {
     LOGW_IF(!mQueue.isEmpty(),
             "freeAllBuffersExceptCurrentLocked called but mQueue is not empty");
-    int head = -1;
+    int head = INVALID_BUFFER_SLOT;
     if (!mQueue.empty()) {
         Fifo::iterator front(mQueue.begin());
         head = *front;
     }
-    mCurrentTexture = INVALID_BUFFER_SLOT;
+    mCurrentTexture = head;
     for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
         if (i != head) {
             freeBufferLocked(i);
@@ -1129,6 +1129,11 @@ void SurfaceTexture::freeAllBuffersExceptHeadLocked() {
 #ifdef QCOM_HARDWARE
     mGraphicBufferAlloc->freeAllGraphicBuffersExcept(head);
 #endif
+}
+
+void SurfaceTexture::freeAllBuffersExceptCurrentLocked() {
+    LOGW("freeAllBuffersExceptCurrentLocked is deprecated !");
+    freeAllBuffersExceptHeadLocked();
 }
 
 status_t SurfaceTexture::drainQueueLocked() {
