@@ -103,7 +103,7 @@ public class PowerManagerService extends IPowerManager.Stub
     private static final int LONG_DIM_TIME = 7000;              // t+N-5 sec
 
     // How long to wait to debounce light sensor changes in milliseconds
-    private static final int LIGHT_SENSOR_DELAY = 4000;
+    private static final int LIGHT_SENSOR_DELAY = 2000;
 
     // light sensor events rate in microseconds
     private static final int LIGHT_SENSOR_RATE = 1000000;
@@ -2139,12 +2139,25 @@ public class PowerManagerService extends IPowerManager.Stub
         }
         if (onMask != 0) {
             int brightness = getPreferredBrightness();
+            int buttonBrightness = brightness;
+
+            if (mButtonBrightnessOverride >= 0) {
+                buttonBrightness = mButtonBrightnessOverride;
+            }
+
             if ((newState & BATTERY_LOW_BIT) != 0 &&
                     brightness > Power.BRIGHTNESS_LOW_BATTERY) {
                 brightness = Power.BRIGHTNESS_LOW_BATTERY;
+                buttonBrightness = brightness;
             }
-            if (mSpew) Slog.i(TAG, "Setting brightess on " + brightness + ": " + onMask);
-            setLightBrightness(onMask, brightness);
+
+            if (mSpew) {
+                Slog.i(TAG, "Setting brightess on " + brightness +
+                        "/" + buttonBrightness + ": " + onMask);
+            }
+
+            setLightBrightness(onMask & SCREEN_BRIGHT_BIT, brightness);
+            setLightBrightness(onMask & (BUTTON_BRIGHT_BIT | KEYBOARD_BRIGHT_BIT), buttonBrightness);
         }
     }
 
