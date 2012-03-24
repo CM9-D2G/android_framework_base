@@ -285,7 +285,8 @@ status_t OMXNodeInstance::enableGraphicBuffers(
             &index);
 
     if (err != OMX_ErrorNone) {
-        LOGE("%s: OMX_GetExtensionIndex failed", __FUNCTION__);
+        LOGE("OMX_GetExtensionIndex failed");
+
         return StatusFromOMXError(err);
     }
 
@@ -322,7 +323,8 @@ status_t OMXNodeInstance::getGraphicBufferUsage(
             &index);
 
     if (err != OMX_ErrorNone) {
-        LOGE("%s: OMX_GetExtensionIndex failed", __FUNCTION__);
+        LOGE("OMX_GetExtensionIndex failed");
+
         return StatusFromOMXError(err);
     }
 
@@ -486,7 +488,8 @@ status_t OMXNodeInstance::useGraphicBuffer(
             &index);
 
     if (err != OMX_ErrorNone) {
-        LOGE("%s: OMX_GetExtensionIndex failed", __FUNCTION__);
+        LOGE("OMX_GetExtensionIndex failed");
+
         return StatusFromOMXError(err);
     }
 

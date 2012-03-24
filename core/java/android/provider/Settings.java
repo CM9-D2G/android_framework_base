@@ -2077,16 +2077,6 @@ public final class Settings {
         public static final String POINTER_SPEED = "pointer_speed";
 
         /**
-         * GLOBAL_PHONE_SIM_ABSENT_TAG setting
-         * This is an integer value in a range between 0 and 1
-         *    0 = Absent
-         *    1 = Present
-         * @hide
-         */
-        public static final String GLOBAL_PHONE_SIM_ABSENT_TAG = "GlobalPhoneRadioOffSimAbsentState";
-
-
-        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
@@ -2906,12 +2896,6 @@ public final class Settings {
          * @hide
          */
         public static final String ADB_PORT = "adb_port";
-
-        /**
-         * Whether to display the ADB notification.
-         * @hide
-         */
-        public static final String ADB_NOTIFY = "adb_notify";
 
         /**
          * Setting to allow mock locations and location provider status to be injected into the

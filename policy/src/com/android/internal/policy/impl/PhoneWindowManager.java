@@ -1228,7 +1228,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         } else {
             config.keyboardHidden = Configuration.KEYBOARDHIDDEN_YES;
         }
-        // Log.e(TAG, "adjustConfigurationLw(): config.hardKeyboardHidden=%d, config.navigationHidden=%d, config.keyboardHidden=%d", config.hardKeyboardHidden, config.navigationHidden, config.keyboardHidden);
     }
 
     /** {@inheritDoc} */
@@ -3295,9 +3294,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     @Override
     public int rotationForOrientationLw(int orientation, int lastRotation) {
         if (false) {
-            Slog.e(TAG, "rotationForOrientationLw(orient="
+            Slog.v(TAG, "rotationForOrientationLw(orient="
                         + orientation + ", last=" + lastRotation
-                        + ", hdmiPlugged=" + mHdmiPlugged + ", mLidOpen=" + mLidOpen + ", mDockMode=" + mDockMode + ", mAccelerometerDefault=" + mAccelerometerDefault + "); user=" + mUserRotation + " "
+                        + "); user=" + mUserRotation + " "
                         + ((mUserRotationMode == WindowManagerPolicy.USER_ROTATION_LOCKED)
                             ? "USER_ROTATION_LOCKED" : "")
                         );
@@ -3335,11 +3334,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 preferredRotation = mHdmiRotation;
             } else if ((mAccelerometerDefault != 0 /* implies not rotation locked */
                             && (orientation == ActivityInfo.SCREEN_ORIENTATION_USER
-                             || orientation == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED))
-                             || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR
-                             || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-                             || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                             || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) {
+                                    || orientation == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED))
+                    || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR
+                    || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                    || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    || orientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) {
                 // Otherwise, use sensor only if requested by the application or enabled
                 // by default for USER or UNSPECIFIED modes.  Does not apply to NOSENSOR.
                 if (mAllowAllRotations < 0) {
