@@ -31,11 +31,16 @@ sources := \
     ProcessState.cpp \
     Static.cpp
 
-LOCAL_PATH:= $(call my-dir)
-
 # Note about gingerbread compatibility : Require a global cflag,
 # several projects use binder's IMemory.h and MemoryHeapBase.h
 # COMMON_GLOBAL_CFLAGS += -DBINDER_COMPAT
+
+ifeq ($(TARGET_USES_ION),true)
+    sources += MemoryHeapIon.cpp
+endif
+
+
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_LDLIBS += -lpthread

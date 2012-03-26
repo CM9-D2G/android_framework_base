@@ -21,8 +21,6 @@
 
 #include <cutils/properties.h>
 
-#define LOG_NDEBUG 0
-
 #include <utils/RefBase.h>
 #include <utils/Log.h>
 
@@ -113,38 +111,10 @@ static status_t selectConfigForPixelFormat(
     eglGetConfigs(dpy, NULL, 0, &numConfigs);
     EGLConfig* const configs = new EGLConfig[numConfigs];
     eglChooseConfig(dpy, attrs, configs, numConfigs, &n);
-
-    LOGD("Wanted surface format = %x", format);
-    EGLint a, g, alpha = 8, green = 8;
-    switch (format) {
-        case HAL_PIXEL_FORMAT_RGBA_8888:
-        case HAL_PIXEL_FORMAT_RGBX_8888:
-        case HAL_PIXEL_FORMAT_BGRA_8888:
-            break;
-        case HAL_PIXEL_FORMAT_RGBA_5551:
-            alpha = 1;
-            green = 5;
-            break;
-        case HAL_PIXEL_FORMAT_RGBA_4444:
-            alpha = 4;
-            green = 4;
-            break;
-        case HAL_PIXEL_FORMAT_RGB_565:
-            green = 6;
-            alpha = 0;
-            break;
-        default:
-            LOGE("%s:%d unhandled pixel format !", __FUNCTION__, __LINE__);
-    }
-
     for (int i=0 ; i<n ; i++) {
-
         EGLint nativeVisualId = 0;
         eglGetConfigAttrib(dpy, configs[i], EGL_NATIVE_VISUAL_ID, &nativeVisualId);
-	eglGetConfigAttrib(dpy, configs[i], EGL_ALPHA_SIZE, &a);
-	eglGetConfigAttrib(dpy, configs[i], EGL_GREEN_SIZE, &g);
-
-	if (a == alpha && g == green) {
+        if (nativeVisualId>0 && format == nativeVisualId) {
             *outConfig = configs[i];
             delete [] configs;
             return NO_ERROR;
@@ -207,10 +177,10 @@ void DisplayHardware::init(uint32_t dpy)
         } else {
             // We have hardware composition enabled. Check the composition type
             if (property_get("debug.composition.type", property, NULL) > 0) {
-                if(((strncmp(property, "c2d", 3)) == 0) ||
-                   ((strncmp(property, "mdp", 3)) == 0)) {
-                        mFlags |= (((strncmp(property, "c2d", 3)) == 0)) ? C2D_COMPOSITION:0;
-                }
+                if((strncmp(property, "c2d", 3)) == 0)
+                    mFlags |=  C2D_COMPOSITION;
+                else if ((strncmp(property, "mdp", 3)) == 0)
+                    mFlags |= MDP_COMPOSITION;
             }
 #endif
         }
