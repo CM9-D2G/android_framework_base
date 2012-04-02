@@ -49,6 +49,9 @@
 #ifdef ALLOW_DEQUEUE_CURRENT_BUFFER
 #define FLAG_ALLOW_DEQUEUE_CURRENT_BUFFER    true
 #warning "ALLOW_DEQUEUE_CURRENT_BUFFER enabled"
+#ifdef OMAP_ENHANCEMENT
+#error "ALLOW_DEQUEUE_CURRENT_BUFFER enabled, but breaks taking/releasing buffers"
+#endif
 #else
 #define FLAG_ALLOW_DEQUEUE_CURRENT_BUFFER    false
 #endif
@@ -1212,6 +1215,35 @@ sp<GraphicBuffer> SurfaceTexture::getCurrentBuffer() const {
     return mCurrentTextureBuf;
 }
 
+#ifdef OMAP_ENHANCEMENT
+sp<GraphicBuffer> SurfaceTexture::takeCurrentBuffer() {
+    Mutex::Autolock lock(mMutex);
+    if (mCurrentTexture != INVALID_BUFFER_SLOT) {
+        mSlots[mCurrentTexture].mBufferState = BufferSlot::TAKEN;
+    }
+    return mCurrentTextureBuf;
+}
+
+void SurfaceTexture::releaseBuffer(sp<GraphicBuffer> graphic_buffer) {
+    Mutex::Autolock lock(mMutex);
+    for (int i=0 ; i<mBufferCount ; i++) {
+        if (mSlots[i].mGraphicBuffer->handle == graphic_buffer->handle) {
+            if (mSlots[i].mBufferState != BufferSlot::TAKEN) {
+                ST_LOGE("buffer not in TAKEN state");
+                return;
+            }
+            mSlots[i].mBufferState = BufferSlot::FREE;
+            // if mCurrentTexture == i, then this buffer needs to be signaled
+            // updateTexImage to prevent this buffer from getting dequeued
+            // out of order
+            if (mCurrentTexture != i) mDequeueCondition.signal();
+            return;
+        }
+    }
+    ST_LOGE("buffer %p not found in SurfaceTexture", graphic_buffer->handle);
+}
+#endif
+
 Rect SurfaceTexture::getCurrentCrop() const {
     Mutex::Autolock lock(mMutex);
     return mCurrentCrop;
@@ -1325,6 +1357,9 @@ void SurfaceTexture::dump(String8& result, const char* prefix,
                 case BufferSlot::DEQUEUED: return "DEQUEUED";
                 case BufferSlot::QUEUED: return "QUEUED";
                 case BufferSlot::FREE: return "FREE";
+#ifdef OMAP_ENHANCEMENT
+                case BufferSlot::TAKEN: return "TAKEN";
+#endif
                 default: return "Unknown";
             }
         }
