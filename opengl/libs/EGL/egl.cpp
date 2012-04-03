@@ -184,9 +184,6 @@ static int sEarlyInitState = pthread_once(&once_control, &early_egl_init);
 
 egl_display_t* validate_display(EGLDisplay dpy) {
     egl_display_t * const dp = get_display(dpy);
-    if (!dpy) {
-        LOGD("%s() dpy is null", __FUNCTION__);
-    }
     if (!dp)
         return setError(EGL_BAD_DISPLAY, (egl_display_t*)NULL);
     if (!dp->isReady())

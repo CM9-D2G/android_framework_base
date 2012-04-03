@@ -158,6 +158,7 @@ LOCAL_SRC_FILES:= \
         android_animation_PropertyValuesHolder.cpp
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+        LOCAL_CFLAGS += -DQCOM_HARDWARE
 	LOCAL_SRC_FILES += org_codeaurora_Performance.cpp
 endif
 
