@@ -9,6 +9,7 @@ else
 LOCAL_SRC_FILES:= \
     AudioParameter.cpp
 endif
+
 LOCAL_MODULE:= libmedia_helper
 LOCAL_MODULE_TAGS := optional
 

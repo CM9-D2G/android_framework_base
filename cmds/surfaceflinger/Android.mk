@@ -12,6 +12,10 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../services/surfaceflinger
 
+ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+LOCAL_C_INCLUDES +=  hardware/qcom/display/libqcomui
+endif
+
 LOCAL_MODULE:= surfaceflinger
 
 include $(BUILD_EXECUTABLE)

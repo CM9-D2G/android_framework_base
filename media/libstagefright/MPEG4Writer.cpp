@@ -1846,6 +1846,9 @@ status_t MPEG4Writer::Track::threadEntry() {
     int64_t timestampUs = 0;
     int64_t cttsDeltaTimeUs = 0;
     bool hasBFrames = false;
+#ifdef QCOM_HARDWARE
+    hasBFrames = true;
+#endif
 
 #if 1
     // XXX: Samsung's video encoder's output buffer timestamp
@@ -1952,6 +1955,18 @@ status_t MPEG4Writer::Track::threadEntry() {
         int32_t isSync = false;
         meta_data->findInt32(kKeyIsSyncFrame, &isSync);
         CHECK(meta_data->findInt64(kKeyTime, &timestampUs));
+
+#ifdef QCOM_HARDWARE
+        if(!mIsAudio) {
+          int32_t frameRate, hfr, multiple;
+          bool success = mMeta->findInt32(kKeySampleRate, &frameRate);
+          CHECK(success);
+          success = mMeta->findInt32(kKeyHFR, &hfr);
+          CHECK(success);
+          multiple = hfr?(hfr/frameRate):1;
+          timestampUs = multiple * timestampUs;
+        }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
         if (mNumSamples == 0) {
