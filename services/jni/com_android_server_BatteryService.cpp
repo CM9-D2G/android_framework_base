@@ -283,9 +283,11 @@ static void android_server_BatteryService_update(JNIEnv* env, jobject obj)
 
             /* Smooth out Motorola charge_counter erratas */
             absolute = labs(capacity - counter);
-            if (absolute >= 10)
+            if (absolute >= 10) {
                 capacity = ceil((counter + capacity) / 2);
-            else
+                LOGW("charge_counter reported '%d' while capacity reported '%d'",
+                     counter, capacity);
+            } else
                 capacity = counter;
 
             /* sanity check for buggy drivers that
