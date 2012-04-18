@@ -35,6 +35,7 @@ import java.util.ArrayList;
 public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterface {
     protected String mAid;
     protected boolean mUSIM;
+    private int mSetPreferredNetworkType;
     private String mLastDataIface;
     boolean RILJ_LOGV = true;
     boolean RILJ_LOGD = true;
@@ -53,6 +54,7 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
 
         if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
+        rr.mp.writeInt(2);
         rr.mp.writeString(pin);
         rr.mp.writeString(mAid);
 
@@ -68,6 +70,7 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
 
         if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
+        rr.mp.writeInt(3);
         rr.mp.writeString(puk);
         rr.mp.writeString(newPin);
         rr.mp.writeString(mAid);
@@ -84,6 +87,7 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
 
         if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
+        rr.mp.writeInt(2);
         rr.mp.writeString(pin);
         rr.mp.writeString(mAid);
 
@@ -99,6 +103,7 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
 
         if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
+        rr.mp.writeInt(3);
         rr.mp.writeString(puk);
         rr.mp.writeString(newPin2);
         rr.mp.writeString(mAid);
@@ -115,6 +120,7 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
 
         if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
+        rr.mp.writeInt(3);
         rr.mp.writeString(oldPin);
         rr.mp.writeString(newPin);
         rr.mp.writeString(mAid);
@@ -131,6 +137,7 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
 
         if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
+        rr.mp.writeInt(3);
         rr.mp.writeString(oldPin2);
         rr.mp.writeString(newPin2);
         rr.mp.writeString(mAid);
@@ -323,6 +330,8 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
             mAid = application.aid;
             mUSIM = application.app_type
                       == IccCardApplication.AppType.APPTYPE_USIM;
+            mSetPreferredNetworkType = mPreferredNetworkType;
+
             if (TextUtils.isEmpty(mAid))
                mAid = "";
             Log.d(LOG_TAG, "mAid " + mAid);
@@ -400,14 +409,20 @@ public class LGEQualcommUiccRIL extends LGEQualcommRIL implements CommandsInterf
     }
 
     @Override
+    public void setCurrentPreferredNetworkType() {
+        if (RILJ_LOGD) riljLog("setCurrentPreferredNetworkType: " + mSetPreferredNetworkType);
+        setPreferredNetworkType(mSetPreferredNetworkType, null);
+    }
+
+    @Override
     public void setPreferredNetworkType(int networkType , Message response) {
         /**
-          * For USIMs, we want the preference to go to LTE, unless "2G-only"
-          * is requested
+          * If not using a USIM, ignore LTE mode and go to 3G
           */
-        if (mUSIM && networkType != RILConstants.NETWORK_MODE_GSM_ONLY) {
-            networkType = RILConstants.NETWORK_MODE_LTE_GSM_WCDMA;
+        if (!mUSIM && networkType == RILConstants.NETWORK_MODE_LTE_GSM_WCDMA) {
+            networkType = RILConstants.NETWORK_MODE_WCDMA_PREF;
         }
+        mSetPreferredNetworkType = networkType;
         super.setPreferredNetworkType(networkType, response);
     }
 
