@@ -137,6 +137,7 @@ class HTML5VideoViewProxy extends Handler
                 // When switching out, clean the video content on the old page
                 // by telling the layer not readyToUseSurfTex.
                 setBaseLayer(mBaseLayer);
+                mHTML5VideoView.release();
             }
         }
 
@@ -171,20 +172,26 @@ class HTML5VideoViewProxy extends Handler
                 WebChromeClient client, int videoLayerId) {
             int currentVideoLayerId = -1;
             boolean backFromFullScreenMode = false;
+            boolean surfaceDeleted = true;
+            int currentState = mHTML5VideoView.STATE_RELEASED;
             if (mHTML5VideoView != null) {
                 currentVideoLayerId = mHTML5VideoView.getVideoLayerId();
                 backFromFullScreenMode = mHTML5VideoView.fullScreenExited();
+                surfaceDeleted = mHTML5VideoView.surfaceTextureDeleted();
+                currentState = mHTML5VideoView.getCurrentState();
             }
 
             if (backFromFullScreenMode
                 || currentVideoLayerId != videoLayerId
-                || mHTML5VideoView.surfaceTextureDeleted()) {
+                || surfaceDeleted == true
+                || currentState == mHTML5VideoView.STATE_RELEASED) {
                 // Here, we handle the case when switching to a new video,
                 // either inside a WebView or across WebViews
                 // For switching videos within a WebView or across the WebView,
                 // we need to pause the old one and re-create a new media player
                 // inside the HTML5VideoView.
-                if (mHTML5VideoView != null) {
+                if (mHTML5VideoView != null
+                    && currentState != mHTML5VideoView.STATE_RELEASED) {
                     if (!backFromFullScreenMode) {
                         mHTML5VideoView.pauseAndDispatch(mCurrentProxy);
                     }
