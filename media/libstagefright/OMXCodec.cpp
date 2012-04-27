@@ -72,6 +72,10 @@ static const int OMX_SEC_COLOR_FormatNV12LVirtualAddress = 0x7F000003;
 static const int OMX_SEC_COLOR_FormatNV12Tiled = 0x7FC00002;
 #endif
 
+#ifdef OMAP_ENHANCEMENT
+#define DVD_RESOLUTION 423936
+#endif
+
 // Treat time out as an error if we have not received any output
 // buffers after 3 seconds.
 const static int64_t kBufferFilledEventTimeOutNs = 3000000000LL;
@@ -990,7 +994,7 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
             bool success = meta->findInt32(kKeyWidth, &width);
             success = success && meta->findInt32(kKeyHeight, &height);
             CHECK(success);
-            if (width*height > MAX_RESOLUTION) {
+            if (width*height > DVD_RESOLUTION) {
                 // need OMX.TI.720P.Encoder
                 return ERROR_UNSUPPORTED;
             }
