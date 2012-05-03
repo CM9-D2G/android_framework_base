@@ -182,6 +182,11 @@ public class Am {
             } else if (opt.equals("--esn")) {
                 String key = nextArgRequired();
                 intent.putExtra(key, (String) null);
+            } else if (opt.equals("--ent")) {
+                String key = nextArgRequired();
+                String act = nextArgRequired();
+                String value = nextArgRequired();
+                intent.putExtra(key, new Intent(act, Uri.parse(value)));
             } else if (opt.equals("--ei")) {
                 String key = nextArgRequired();
                 String value = nextArgRequired();
@@ -1333,6 +1338,7 @@ public class Am {
                 "    [--eu <EXTRA_KEY> <EXTRA_URI_VALUE> ...]\n" +
                 "    [--eia <EXTRA_KEY> <EXTRA_INT_VALUE>[,<EXTRA_INT_VALUE...]]\n" +
                 "    [--ela <EXTRA_KEY> <EXTRA_LONG_VALUE>[,<EXTRA_LONG_VALUE...]]\n" +
+                "    [--ent <EXTRA_KEY> <EXTRA_SUBINTENT_ACTION> <SUBINTENT_URI_DATA>]\n" +
                 "    [-n <COMPONENT>] [-f <FLAGS>]\n" +
                 "    [--grant-read-uri-permission] [--grant-write-uri-permission]\n" +
                 "    [--debug-log-resolution] [--exclude-stopped-packages]\n" +
