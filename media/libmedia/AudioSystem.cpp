@@ -954,7 +954,7 @@ extern "C" bool _ZN7android11AudioSystem15isLowVisibilityENS0_11stream_typeE(aud
 
 #endif /* USES_AUDIO_LEGACY */
 
-#ifdef YAMAHAPLAYER
+#ifdef USE_SAMSUNG_SEPARATEDSTREAM
 extern "C" bool _ZN7android11AudioSystem17isSeparatedStreamE19audio_stream_type_t(audio_stream_type_t stream)
 {
     LOGD("android::AudioSystem::isSeparatedStream(audio_stream_type_t) called!");
@@ -972,7 +972,7 @@ extern "C" bool _ZN7android11AudioSystem17isSeparatedStreamE19audio_stream_type_
     LOGD("isSeparatedStream: false");
     return false;
 }
-#endif // YAMAHAPLAYER
+#endif // USE_SAMSUNG_SEPARATEDSTREAM
 
 }; // namespace android
 
