@@ -842,11 +842,8 @@ public class KeyEvent extends InputEvent implements Parcelable {
         names.append(KEYCODE_BRIGHTNESS_UP, "KEYCODE_BRIGHTNESS_UP");
         names.append(KEYCODE_BRIGHTNESS_AUTO, "KEYCODE_BRIGHTNESS_AUTO");
         names.append(KEYCODE_SCREENSHOT, "KEYCODE_SCREENSHOT");
-<<<<<<< HEAD
         names.append(KEYCODE_ALT_LOCK, "KEYCODE_ALT_LOCK");
         names.append(KEYCODE_VOICE, "KEYCODE_VOICE");
-=======
->>>>>>> upstream/ics
     };
 
     // Symbolic names of all metakeys in bit order from least significant to most significant.
