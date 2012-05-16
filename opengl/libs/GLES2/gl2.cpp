@@ -214,7 +214,7 @@ all real cases encountered so far.
         } else {
             strcpy(newStrings[i], start);
         }
-        LOGW("%s", newStrings[i]);
+//        LOGW("%s", newStrings[i]);
     }
 
     __glShaderSource(shader, count, const_cast<const GLchar **>(newStrings), length);
