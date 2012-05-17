@@ -72,7 +72,8 @@ import com.android.internal.app.ThemeUtils;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;Iterator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -165,8 +166,7 @@ public class PowerManagerService extends IPowerManager.Stub
     private final int MY_UID;
     private final int MY_PID;
 
-    private final Locklist mAcquiredLocks;
-    private boolean mDeepSleepMode;
+    private boolean mDeepSleepMode = false;
     private boolean mDoneBooting = false;
     private boolean mBootCompleted = false;
     private int mStayOnConditions = 0;
@@ -197,6 +197,7 @@ public class PowerManagerService extends IPowerManager.Stub
     private long mLastEventTime = 0;
     private long mScreenOffTime;
     private volatile WindowManagerPolicy mPolicy;
+    private final LockList mAcquiredLocks = new LockList();
     private final LockList mLocks = new LockList();
     private Intent mScreenOffIntent;
     private Intent mScreenOnIntent;
@@ -374,8 +375,7 @@ public class PowerManagerService extends IPowerManager.Stub
             if (!mRefCounted || mCount++ == 0) {
                 long ident = Binder.clearCallingIdentity();
                 try {
-                    PowerManagerService.this.acquireWakeLockLocked(mFlags, mToken,
-                            MY_UID, MY_PID, mTag, null);
+                    acquireWakeLockLocked(mFlags, mToken, MY_UID, MY_PID, mTag, null);
                     mHeld = true;
                 } finally {
                     Binder.restoreCallingIdentity(ident);
@@ -384,8 +384,10 @@ public class PowerManagerService extends IPowerManager.Stub
         }
 
         public void release() {
-            if ((!PowerManagerService.this.mDeepSleepMode) || (PowerManagerService.this.putReleasedWakeLock(mToken, 0) != true))) {
-                PowerManagerService.this.releaseWakeLockLocked(mToken, 0, false);
+            if (!mRefCounted || --mCount == 0) {
+                if (!mDeepSleepMode || !putReleasedWakeLock(mToken, 0)) {
+                    releaseWakeLockLocked(mToken, 0, false);
+                }
                 mHeld = false;
             }
             if (mCount < 0) {
@@ -393,8 +395,7 @@ public class PowerManagerService extends IPowerManager.Stub
             }
         }
 
-        public boolean isHeld()
-        {
+        public boolean isHeld() {
             return mHeld;
         }
 
@@ -739,8 +740,9 @@ public class PowerManagerService extends IPowerManager.Stub
         }
         public void binderDied() {
             synchronized (mLocks) {
-                if ((!mDeepSleepMode) || (putReleasedWakeLock(this.binder, 0) != true))
-                  releaseWakeLockLocked(this.binder, 0, true);
+                if (!mDeepSleepMode || putReleasedWakeLock(this.binder, 0) == false) {
+                    releaseWakeLockLocked(this.binder, 0, true);
+                }
             }
         }
         final int flags;
@@ -785,30 +787,26 @@ public class PowerManagerService extends IPowerManager.Stub
     public void acquireWakeLock(int flags, IBinder lock, String tag, WorkSource ws) {
         int uid = Binder.getCallingUid();
         int pid = Binder.getCallingPid();
+
         if (uid != Process.myUid()) {
             mContext.enforceCallingOrSelfPermission(android.Manifest.permission.WAKE_LOCK, null);
         }
+
         if (ws != null) {
             enforceWakeSourcePermission(uid, pid);
         }
-        long ident;
-        synchronized (mLocks)
-        {
-          if (mDeepSleepMode)
-          {
-            putAcquiredWakeLocks(flags, lock, uid, pid, tag, ws);
-            return;
-          }
-          ident = Binder.clearCallingIdentity(); 
+
+        synchronized (mLocks) {
+            if (mDeepSleepMode) {
+                putAcquiredWakeLocks(flags, lock, uid, pid, tag, ws);
+                return;
+            }
         }
+
+        long ident = Binder.clearCallingIdentity();
         try {
             synchronized (mLocks) {
                 acquireWakeLockLocked(flags, lock, uid, pid, tag, ws);
-                Binder.restoreCallingIdentity(ident);
-                return;
-                localObject1 = finally;
-                monitorexit;
-                throw localObject1;
             }
         } finally {
             Binder.restoreCallingIdentity(ident);
@@ -1010,56 +1008,47 @@ public class PowerManagerService extends IPowerManager.Stub
         }
 
         synchronized (mLocks) {
-            if ((!mDeepSleepMode) || (putReleasedWakeLock(lock, flags) != true))
-                synchronized (mLocks){
+            if (!mDeepSleepMode || putReleasedWakeLock(lock, flags) == false) {
+                synchronized (mLocks) {
                     releaseWakeLockLocked(lock, flags, false);
                 }
+            }
         }
     }
 
     private void putAcquiredWakeLocks(int paramInt1, IBinder paramIBinder, int paramInt2, int paramInt3, String paramString, WorkSource paramWorkSource)
     {
-      synchronized (this.mAcquiredLocks)
-      {
-        Slog.d("PowerManagerService", "putAcquiredWakeLocks flags=0x" + Integer.toHexString(paramInt1) + " tag=" + paramString);
-        Slog.d("PowerManagerService", "******mAcquiredLocks contents*****");
-        this.mAcquiredLocks.dump();
-        if (this.mAcquiredLocks.getIndex(paramIBinder) < 0)
-        {
-          WakeLock localWakeLock = new WakeLock(paramInt1, paramIBinder, paramString, paramInt2, paramInt3);
-          localWakeLock.ws = paramWorkSource;
-          this.mAcquiredLocks.addLock(localWakeLock);
-          Slog.d("PowerManagerService", "putAcquiredWakeLocks --> add partial wakelocks into the list, size is" + this.mAcquiredLocks.size());
+      synchronized (this.mAcquiredLocks) {
+          Slog.d(TAG, "putAcquiredWakeLocks flags=0x" + Integer.toHexString(paramInt1) + " tag=" + paramString);
+          this.mAcquiredLocks.dump();
+          if (this.mAcquiredLocks.getIndex(paramIBinder) < 0) {
+              WakeLock localWakeLock = new WakeLock(paramInt1, paramIBinder, paramString, paramInt2, paramInt3);
+              localWakeLock.ws = paramWorkSource;
+              this.mAcquiredLocks.addLock(localWakeLock);
+              Slog.d(TAG, "putAcquiredWakeLocks --> add partial wakelocks into the list, size is" + this.mAcquiredLocks.size());
+          }
+          this.mAcquiredLocks.dump();
+          return;
         }
-        Slog.d("PowerManagerService", "******mAcquiredLocks contents*****");
-        this.mAcquiredLocks.dump();
-        return;
-      }
     }
 
-    private boolean putReleasedWakeLock(IBinder paramIBinder, int paramInt)
-    {
-      synchronized (this.mAcquiredLocks)
-      {
-        Slog.d("PowerManagerService", "putReleasedWakeLock");
-        Slog.d("PowerManagerService", "******mAcquiredLocks contents*****");
-        this.mAcquiredLocks.dump();
-        WakeLock wl = this.mAcquiredLocks.removeLock(paramIBinder);
-        Slog.d("PowerManagerService", "putReleasedWakeLock --> remove partial wakelocks into list, size is " + this.mAcquiredLocks.size());
-        Slog.d("PowerManagerService", "******mAcquiredLocks contents*****");
-        this.mAcquiredLocks.dump();
-        int i;
-        if (wl != null)
-        {
-          Slog.d("PowerManagerService", "putReleasedWakeLock flags=0x" + Integer.toHexString(wl.flags) + " tag= " + wl.tag);
-          i = 1;
+    private boolean putReleasedWakeLock(IBinder paramIBinder, int paramInt) {
+        boolean i;
+        synchronized (this.mAcquiredLocks) {
+            Slog.d(TAG, "putReleasedWakeLock");
+            this.mAcquiredLocks.dump();
+            WakeLock wl = this.mAcquiredLocks.removeLock(paramIBinder);
+            Slog.d(TAG, "putReleasedWakeLock --> remove partial wakelocks into list, size is " + this.mAcquiredLocks.size());
+            this.mAcquiredLocks.dump();
+
+            if (wl != null) {
+                Slog.d(TAG, "putReleasedWakeLock flags=0x" + Integer.toHexString(wl.flags) + " tag= " + wl.tag);
+                i = true;
+            } else {
+                i = false;
+            }
         }
-        else
-        {
-          i = 0;
-        }
-      }
-      return localObject;
+        return i;
     }
 
     private void releaseWakeLockLocked(IBinder lock, int flags, boolean death) {
@@ -2461,15 +2450,15 @@ public class PowerManagerService extends IPowerManager.Stub
     }
 
     private void forceUserActivityLocked() {
-        if (!mDeepSleepMode){
-          if (isScreenTurningOffLocked()) {
-              // cancel animation so userActivity will succeed
-              mScreenBrightness.animating = false;
-          }
-          boolean savedActivityAllowed = mUserActivityAllowed;
-          mUserActivityAllowed = true;
-          userActivity(SystemClock.uptimeMillis(), false);
-          mUserActivityAllowed = savedActivityAllowed;
+        if (!mDeepSleepMode) {
+            if (isScreenTurningOffLocked()) {
+                // cancel animation so userActivity will succeed
+                mScreenBrightness.animating = false;
+            }
+            boolean savedActivityAllowed = mUserActivityAllowed;
+            mUserActivityAllowed = true;
+            userActivity(SystemClock.uptimeMillis(), false);
+            mUserActivityAllowed = savedActivityAllowed;
         }
     }
 
@@ -2492,8 +2481,9 @@ public class PowerManagerService extends IPowerManager.Stub
     }
 
     public void userActivity(long time, boolean noChangeLights, int eventType) {
-        if ((.mDeepSleepMode) && (eventType == 5))
+        if (mDeepSleepMode && eventType == 5) {
             mDeepSleepMode = false;
+        }
         userActivity(time, -1, noChangeLights, eventType, false);
     }
 
@@ -3222,8 +3212,8 @@ public class PowerManagerService extends IPowerManager.Stub
         // Slog.i(TAG, "updateSettingsValues(): mShortKeylightDelay now " + mShortKeylightDelay);
     }
 
-    private class LockList extends ArrayList<WakeLock>
-    {
+    private class LockList extends ArrayList<WakeLock> {
+
         void addLock(WakeLock wl)
         {
             int index = getIndex(wl.binder);
@@ -3231,17 +3221,20 @@ public class PowerManagerService extends IPowerManager.Stub
                 this.add(wl);
             }
         }
-         void dump()
-        {
-          Iterator Iter = iterator();
-          while (true)
-          {
-            if (!Iter.hasNext())
-              return;
-            WakeLock wl = (WakeLock)Iter.next();
-            Slog.d("PowerManagerService", "LockList entry : flags=0x" + Integer.toHexString(wl.flags) + " tag=" + wl.tag);
-          }
+
+        void dump() {
+            Slog.d(TAG, "******mAcquiredLocks contents*****");
+            Iterator Iter = iterator();
+            while (true) {
+                if (!Iter.hasNext()) {
+                    return;
+                }
+                WakeLock wl = (WakeLock)Iter.next();
+                Slog.d(TAG, "LockList entry : flags=0x" + Integer.toHexString(wl.flags)
+                        + " tag=" + wl.tag);
+            }
         }
+
         WakeLock removeLock(IBinder binder)
         {
             int index = getIndex(binder);
