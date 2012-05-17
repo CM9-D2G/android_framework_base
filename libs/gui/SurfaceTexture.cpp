@@ -469,6 +469,7 @@ status_t SurfaceTexture::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
             // use the default size
             w = mDefaultWidth;
             h = mDefaultHeight;
+            ST_LOGV("dequeueBuffer: using default size %dx%d", w, h);
         }
 
         const bool updateFormat = (format != 0);
@@ -525,6 +526,12 @@ status_t SurfaceTexture::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
                 mPixelFormat = format;
             }
 
+            if (mPixelFormat != format) {
+                LOGW("dequeueBuffer: mPixelFormat %d != format %d", mPixelFormat, format);
+            }
+            if (mPixelFormat != 1 && mPixelFormat != 4 && mPixelFormat != 5) {
+                LOGW("dequeueBuffer: non standard pixel format: %d.", mPixelFormat);
+            }
             mSlots[buf].mGraphicBuffer = graphicBuffer;
             mSlots[buf].mRequestBufferCalled = false;
             mSlots[buf].mFence = EGL_NO_SYNC_KHR;
@@ -969,9 +976,12 @@ bool SurfaceTexture::isExternalFormat(uint32_t format)
     }
 
     // Any OEM format needs to be considered
-    if (format>=0x100 && format<=0x1FF)
+    if (format>=0x100 && format<=0x1FF) {
+        LOGD("%s: format=%u true", __FUNCTION__, format);
         return true;
+    }
 
+    LOGD("%s: format=%u false", __FUNCTION__, format);
     return false;
 }
 
@@ -985,7 +995,7 @@ void SurfaceTexture::getTransformMatrix(float mtx[16]) {
 }
 
 void SurfaceTexture::computeCurrentTransformMatrix() {
-    ST_LOGV("computeCurrentTransformMatrix");
+    ST_LOGV("%s: mCurrentTransform=0x%x", __FUNCTION__, mCurrentTransform);
 
     float xform[16];
     for (int i = 0; i < 16; i++) {
@@ -1114,12 +1124,12 @@ void SurfaceTexture::freeAllBuffersLocked() {
 void SurfaceTexture::freeAllBuffersExceptHeadLocked() {
     LOGW_IF(!mQueue.isEmpty(),
             "freeAllBuffersExceptCurrentLocked called but mQueue is not empty");
-    int head = -1;
+    int head = INVALID_BUFFER_SLOT;
     if (!mQueue.empty()) {
         Fifo::iterator front(mQueue.begin());
         head = *front;
     }
-    mCurrentTexture = INVALID_BUFFER_SLOT;
+    mCurrentTexture = head;
     for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
         if (i != head) {
             freeBufferLocked(i);
@@ -1128,6 +1138,11 @@ void SurfaceTexture::freeAllBuffersExceptHeadLocked() {
 #ifdef QCOM_HARDWARE
     mGraphicBufferAlloc->freeAllGraphicBuffersExcept(head);
 #endif
+}
+
+void SurfaceTexture::freeAllBuffersExceptCurrentLocked() {
+    LOGW("freeAllBuffersExceptCurrentLocked is deprecated !");
+    freeAllBuffersExceptHeadLocked();
 }
 
 status_t SurfaceTexture::drainQueueLocked() {
