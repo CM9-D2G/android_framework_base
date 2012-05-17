@@ -45,7 +45,6 @@ public class Power
 
     public static native void acquireWakeLock(int lock, String id);
     public static native void releaseWakeLock(String id);
-    public static native int setDeepSleepState(boolean on);
 
     /**
      * Brightness value for fully off
