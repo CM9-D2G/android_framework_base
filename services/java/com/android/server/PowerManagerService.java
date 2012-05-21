@@ -2842,6 +2842,45 @@ public class PowerManagerService extends IPowerManager.Stub
         }
     }
 
+    private void acquireWakeLocksWithForce()
+    {
+        synchronized(mAcquiredLocks) {
+            Slog.d(TAG, "acquireWakeLocksWithForce -->mAcquiredLocks size " + mAcquiredLocks.size());
+            Iterator<WakeLock> it = mAcquiredLocks.iterator();
+            while (it.hasNext()) {
+                WakeLock w = (WakeLock)it.next();
+                acquireWakeLockLocked(w.flags, w.binder, w.uid, w.pid, w.tag, w.ws);
+            }
+            mAcquiredLocks.clear();
+            Slog.d(TAG, "Acquire all wakelocks, mAcquiredLocks size " + mAcquiredLocks.size());
+        }
+    }
+
+    private void releaseWakeLocksWithForce()
+    {
+        synchronized(mAcquiredLocks) {
+            Slog.d(TAG, "releaseWakeLocksWithForce");
+            mLocks.dump();
+            Iterator<WakeLock> it = mLocks.iterator();
+            while (it.hasNext()) {
+                WakeLock w = (WakeLock)it.next();
+                WakeLock wl = new WakeLock(w.flags, w.binder, w.tag, w.uid, w.pid);
+                wl.ws = w.ws;
+                mAcquiredLocks.addLock(wl);
+                Slog.d(TAG, "releaseWakeLocksWithForce --> mAcquiredLocks size is " + mAcquiredLocks.size());
+                Slog.d(TAG, "Added Partial WakeLock in mAcquiredLocks FLAG:" + wl.flags + " TAG: " + wl.tag);
+            }
+            it = mAcquiredLocks.iterator();
+            while (it.hasNext()) {
+                WakeLock w = (WakeLock)it.next();
+                Slog.d(TAG, "Release Partial WakeLock FLAG:" + w.flags + " TAG: " + w.tag);
+                releaseWakeLockLocked(w.binder, w.flags, false);
+            }
+            mAcquiredLocks.dump();
+            mLocks.dump();
+        }
+    }
+
     /**
      * The user requested that we go to deep sleep (probably with the power button).
      * This overrides all wake locks that are held.
