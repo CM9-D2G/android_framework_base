@@ -1855,6 +1855,11 @@ public class PowerManagerService extends IPowerManager.Stub
                 newState = (newState & ~SCREEN_BRIGHT);
             }
 
+            if (mDeepSleepMode) {
+                // Deepsleep mode does not turn on screen
+                newState = (newState & ~BATTERY_LOW_BIT);
+            }
+
             if (batteryIsLow()) {
                 newState |= BATTERY_LOW_BIT;
             } else {
@@ -2834,6 +2839,30 @@ public class PowerManagerService extends IPowerManager.Stub
                     mKeyboardLight.setBrightness(keyboardValue);
                 }
             }
+        }
+    }
+
+    /**
+     * The user requested that we go to deep sleep (probably with the power button).
+     * This overrides all wake locks that are held.
+     */
+    public void goToDeepSleep(boolean mode, long time)
+    {
+        if (mDeepSleepMode == mode) {
+            return;
+        }
+
+        if (mode) {
+            synchronized (mLocks) {
+                mDeepSleepMode = true;
+                this.releaseWakeLocksWithForce();
+                goToSleepLocked((time + 5), WindowManagerPolicy.OFF_BECAUSE_OF_USER);
+                Power.setDeepSleepState(true);
+            }
+        } else {
+            mDeepSleepMode = false;
+            this.acquireWakeLocksWithForce();
+            this.forceUserActivityLocked();
         }
     }
 
