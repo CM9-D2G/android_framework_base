@@ -1222,6 +1222,28 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
     }
 
     /**
+     * Clear data call entries with duplicate call ids.
+     * The function will retain the first found unique call id.
+     *
+     * @param dataCalls
+     * @return unique set of dataCalls.
+     */
+    private ArrayList<DataCallState> clearDuplicates(
+            ArrayList<DataCallState> dataCalls) {
+        // clear duplicate cid's
+        ArrayList<Integer> cids = new ArrayList<Integer>();
+        ArrayList<DataCallState> uniqueCalls = new ArrayList<DataCallState>();
+        for (DataCallState dc : dataCalls) {
+            if (!cids.contains(dc.cid)) {
+                uniqueCalls.add(dc);
+                cids.add(dc.cid);
+            }
+        }
+        log("Number of DataCallStates:" + dataCalls.size() + "Unique count:" + uniqueCalls.size());
+        return uniqueCalls;
+    }
+
+    /**
      * @param ar is the result of RIL_REQUEST_DATA_CALL_LIST
      * or RIL_UNSOL_DATA_CALL_LIST_CHANGED
      */
@@ -1239,6 +1261,11 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
             return;
         }
         if (DBG) log("onDataStateChanged(ar): DataCallState size=" + dataCallStates.size());
+
+        dataCallStates = clearDuplicates(dataCallStates);
+
+        boolean isAnyDataCallDormant = false;
+        boolean isAnyDataCallActive = false;
 
         // Create a hash map to store the dataCallState of each DataConnectionAc
         HashMap<DataCallState, DataConnectionAc> dataCallStateToDcac;
@@ -1260,6 +1287,9 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
                 loge("onDataStateChanged(ar): No associated DataConnection ignore");
                 continue;
             }
+
+            if (newState.active == DATA_CONNECTION_ACTIVE_PH_LINK_UP) isAnyDataCallActive = true;
+            if (newState.active == DATA_CONNECTION_ACTIVE_PH_LINK_DOWN) isAnyDataCallDormant = true;
 
             // The list of apn's associated with this DataConnection
             Collection<ApnContext> apns = dcac.getApnListSync();
@@ -1340,6 +1370,32 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
                 }
             }
         }
+
+        if (isAnyDataCallDormant && !isAnyDataCallActive) {
+            // There is no way to indicate link activity per APN right now. So
+            // Link Activity will be considered dormant only when all data calls
+            // are dormant.
+            // If a single data call is in dormant state and none of the data
+            // calls are active broadcast overall link state as dormant.
+            mActivity = Activity.DORMANT;
+            if (DBG) {
+                log("onDataStateChanged: Data Activity updated to DORMANT. stopNetStatePoll");
+            }
+            stopNetStatPoll();
+            stopDataStallAlarm();
+        } else {
+            mActivity = Activity.NONE;
+            if (DBG) {
+                log("onDataStateChanged: Data Activity updated to NONE. " +
+                         "isAnyDataCallActive = " + isAnyDataCallActive +
+                         " isAnyDataCallDormant = " + isAnyDataCallDormant);
+            }
+            if (isAnyDataCallActive) {
+                startNetStatPoll();
+                startDataStallAlarm(DATA_STALL_NOT_SUSPECTED);
+            }
+        }
+        mPhone.notifyDataActivity();
 
         if (apnsToCleanup.size() != 0) {
             // Add an event log when the network drops PDP
@@ -1575,7 +1631,7 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
             } else if (sent == 0 && received > 0) {
                 newActivity = Activity.DATAIN;
             } else {
-                newActivity = Activity.NONE;
+                newActivity = (mActivity == Activity.DORMANT) ? mActivity : Activity.NONE;
             }
 
             if (mActivity != newActivity && mIsScreenOn) {
@@ -1738,7 +1794,7 @@ public final class GsmDataConnectionTracker extends DataConnectionTracker {
         intent.putExtra(DATA_STALL_ALARM_TAG_EXTRA, mDataStallAlarmTag);
         mDataStallAlarmIntent = PendingIntent.getBroadcast(mPhone.getContext(), 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
-        am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+        am.set(AlarmManager.ELAPSED_REALTIME,
                 SystemClock.elapsedRealtime() + delayInMs, mDataStallAlarmIntent);
     }
 
