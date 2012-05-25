@@ -267,15 +267,13 @@ class ServerThread extends Thread {
                 }
             }
 
-            if (SystemProperties.QCOM_HARDWARE) {
-                Slog.i(TAG, "DynamicMemoryManager Service");
-                dmm = new DynamicMemoryManagerService(context);
+            Slog.i(TAG, "DynamicMemoryManager Service");
+            dmm = new DynamicMemoryManagerService(context);
 
-                cpuGovernorManager = new CpuGovernorService(context);
+            cpuGovernorManager = new CpuGovernorService(context);
 
-                if (cpuGovernorManager == null) {
-                    Slog.e(TAG, "CpuGovernorService failed to start");
-                }
+            if (cpuGovernorManager == null) {
+                Slog.e(TAG, "CpuGovernorService failed to start");
             }
         } catch (RuntimeException e) {
             Slog.e("System", "******************************************");

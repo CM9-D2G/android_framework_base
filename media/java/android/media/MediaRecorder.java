@@ -687,36 +687,32 @@ public class MediaRecorder
     public native void native_stop() throws IllegalStateException;
 
     public void start() throws IllegalStateException {
-        if (SystemProperties.QCOM_HARDWARE) {
-            try {
-                Application application = ActivityThread.currentApplication();
-                if (application != null) {
-                    Intent ioBusyVoteIntent = new Intent(IOBUSY_VOTE);
-                    // Vote for io_is_busy to be turned off.
-                    ioBusyVoteIntent.putExtra("com.android.server.CpuGovernorService.voteType", 0);
-                    application.sendBroadcast(ioBusyVoteIntent);
-                }
-            } catch (Exception exception) {
-                Log.e(TAG, "Unable to vote to turn io_is_busy off.");
+        try {
+            Application application = ActivityThread.currentApplication();
+            if (application != null) {
+                Intent ioBusyVoteIntent = new Intent(IOBUSY_VOTE);
+                // Vote for io_is_busy to be turned off.
+                ioBusyVoteIntent.putExtra("com.android.server.CpuGovernorService.voteType", 0);
+                application.sendBroadcast(ioBusyVoteIntent);
             }
+        } catch (Exception exception) {
+            Log.e(TAG, "Unable to vote to turn io_is_busy off.");
         }
 
         native_start();
     }
 
     public void stop() throws IllegalStateException {
-        if (SystemProperties.QCOM_HARDWARE) {
-            try {
-                Application application = ActivityThread.currentApplication();
-                if (application != null) {
-                    Intent ioBusyUnVoteIntent = new Intent(IOBUSY_UNVOTE);
-                    // Remove vote for io_is_busy to be turned off.
-                    ioBusyUnVoteIntent.putExtra("com.android.server.CpuGovernorService.voteType", 0);
-                    application.sendBroadcast(ioBusyUnVoteIntent);
-                }
-            } catch (Exception exception) {
-                Log.e(TAG, "Unable to withdraw io_is_busy off vote.");
+        try {
+            Application application = ActivityThread.currentApplication();
+            if (application != null) {
+                Intent ioBusyUnVoteIntent = new Intent(IOBUSY_UNVOTE);
+                // Remove vote for io_is_busy to be turned off.
+                ioBusyUnVoteIntent.putExtra("com.android.server.CpuGovernorService.voteType", 0);
+                application.sendBroadcast(ioBusyUnVoteIntent);
             }
+        } catch (Exception exception) {
+            Log.e(TAG, "Unable to withdraw io_is_busy off vote.");
         }
 
         native_stop();
