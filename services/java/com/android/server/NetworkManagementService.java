@@ -187,9 +187,9 @@ public class NetworkManagementService extends INetworkManagementService.Stub
 
         if (hasKernelSupport && shouldEnable) {
             Slog.d(TAG, "enabling bandwidth control");
+            mBandwidthControlEnabled = true;
             try {
                 mConnector.doCommand("bandwidth enable");
-                mBandwidthControlEnabled = true;
             } catch (NativeDaemonConnectorException e) {
                 Log.wtf(TAG, "problem enabling bandwidth controls", e);
             }
