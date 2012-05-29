@@ -41,7 +41,7 @@ using namespace android;
 
 #define DEBUG_CALL_GL_API 0
 
-#if USE_FAST_TLS_KEY
+#if USE_FAST_TLS_KEY && defined(HAVE_ARM_TLS_REGISTER)
 
     #ifdef HAVE_TEGRA_ERRATA_657451
         #define MUNGE_TLS(_tls) \
