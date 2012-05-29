@@ -74,6 +74,11 @@ private:
 #ifdef QCOM_HARDWARE
     int dispatchPerformQcomOperation(int operation, va_list args);
 #endif
+#ifdef OMAP_ENHANCEMENT
+    int dispatchSetBuffersLayout(va_list args);
+    int dispatchUpdateAndGetCurrent(va_list args);
+    int dispatchSetBuffersMetadata(va_list args);
+#endif
 
 protected:
     virtual int cancelBuffer(ANativeWindowBuffer* buffer);
@@ -98,6 +103,11 @@ protected:
     virtual int unlockAndPost();
 #ifdef QCOM_HARDWARE
     virtual int performQcomOperation(int operation, int arg1, int arg2, int arg3);
+#endif
+#ifdef OMAP_ENHANCEMENT
+    virtual int setBuffersMetadata(const char *metadata);
+    virtual int setBuffersLayout(uint32_t layout);
+    virtual int updateAndGetCurrent(ANativeWindowBuffer** buffer);
 #endif
 
     enum { MIN_UNDEQUEUED_BUFFERS = SurfaceTexture::MIN_UNDEQUEUED_BUFFERS };
@@ -154,6 +164,12 @@ private:
     // window. this is only a hint, actual transform may differ.
     uint32_t mTransformHint;
 
+#ifdef OMAP_ENHANCEMENT
+    // mMetadata is a flattned string that contains some metadata for the
+    // current texture
+    String8 mMetadata;
+#endif
+
     // mMutex is the mutex used to prevent concurrent access to the member
     // variables of SurfaceTexture objects. It must be locked whenever the
     // member variables are accessed.
@@ -167,6 +183,9 @@ private:
 #else
     mutable Region              mOldDirtyRegion;
 #endif
+#ifdef OMAP_ENHANCEMENT
+    mutable Vector<Region>      mOldDirtyRegionHistory;
+#endif
     bool                        mConnectedToCpu;
 
 #ifdef QCOM_HARDWARE
@@ -177,6 +196,12 @@ private:
     // GRALLOC_USAGE_EXTERNAL_BLOCK
     // It is initialized to 0
     uint32_t mReqExtUsage;
+#endif
+
+#ifdef OMAP_ENHANCEMENT
+    // mCurrentBuffer contains the current buffer from SurfaceTexture
+    // used in updateAndGetCurrent
+    sp<GraphicBuffer> mCurrentBuffer;
 #endif
 };
 
