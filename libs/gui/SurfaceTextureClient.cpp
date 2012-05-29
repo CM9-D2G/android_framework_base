@@ -20,6 +20,9 @@
 #include <gui/SurfaceTextureClient.h>
 #include <surfaceflinger/ISurfaceComposer.h>
 #include <surfaceflinger/SurfaceComposerClient.h>
+#ifdef OMAP_ENHANCEMENT
+#include <cutils/properties.h>
+#endif
 
 #include <utils/Log.h>
 
@@ -71,6 +74,22 @@ void SurfaceTextureClient::init() {
     mDefaultHeight = 0;
     mTransformHint = 0;
     mConnectedToCpu = false;
+#ifdef OMAP_ENHANCEMENT
+    char value[PROPERTY_VALUE_MAX];
+    property_get("surfaceflingerclient.numbuffers", value, "2");
+    int numBuffers = atoi(value);
+    // clamp to valid range
+    if (numBuffers < SurfaceTexture::MIN_SURFACEFLINGERCLIENT_BUFFERS) {
+        numBuffers = SurfaceTexture::MIN_SURFACEFLINGERCLIENT_BUFFERS;
+    } else if (numBuffers > SurfaceTexture::MAX_SURFACEFLINGERCLIENT_BUFFERS) {
+        numBuffers = SurfaceTexture::MAX_SURFACEFLINGERCLIENT_BUFFERS;
+    }
+    // initialize vector
+    // we only need to maintain (numbuffers -1) dirty region history
+    for (int i = 0; i < (numBuffers - 1); i++) {
+        mOldDirtyRegionHistory.push_back(Region());
+    }
+#endif
 }
 
 void SurfaceTextureClient::setISurfaceTexture(
@@ -236,8 +255,14 @@ int SurfaceTextureClient::queueBuffer(android_native_buffer_t* buffer) {
     if (i < 0) {
         return i;
     }
+#ifdef OMAP_ENHANCEMENT
+    status_t err = mSurfaceTexture->queueBuffer(i, timestamp,
+            &mDefaultWidth, &mDefaultHeight, &mTransformHint,
+            mMetadata);
+#else
     status_t err = mSurfaceTexture->queueBuffer(i, timestamp,
             &mDefaultWidth, &mDefaultHeight, &mTransformHint);
+#endif
     if (err != OK)  {
         LOGE("queueBuffer: error queuing buffer to SurfaceTexture, %d", err);
     }
@@ -315,6 +340,11 @@ int SurfaceTextureClient::perform(int operation, va_list args)
     case NATIVE_WINDOW_SET_BUFFERS_TIMESTAMP:
         res = dispatchSetBuffersTimestamp(args);
         break;
+#ifdef OMAP_ENHANCEMENT
+    case NATIVE_WINDOW_SET_BUFFERS_METADATA:
+        res = dispatchSetBuffersMetadata(args);
+        break;
+#endif
     case NATIVE_WINDOW_SET_BUFFERS_DIMENSIONS:
         res = dispatchSetBuffersDimensions(args);
         break;
@@ -336,6 +366,14 @@ int SurfaceTextureClient::perform(int operation, va_list args)
     case NATIVE_WINDOW_API_DISCONNECT:
         res = dispatchDisconnect(args);
         break;
+#ifdef OMAP_ENHANCEMENT
+    case NATIVE_WINDOW_SET_BUFFERS_LAYOUT:
+        res = dispatchSetBuffersLayout(args);
+        break;
+    case NATIVE_WINDOW_UPDATE_AND_GET_CURRENT:
+        res = dispatchUpdateAndGetCurrent(args);
+        break;
+#endif
     default:
 #ifdef QCOM_HARDWARE
         res = dispatchPerformQcomOperation(operation, args);
@@ -428,6 +466,13 @@ int SurfaceTextureClient::dispatchSetBuffersTimestamp(va_list args) {
     return setBuffersTimestamp(timestamp);
 }
 
+#ifdef OMAP_ENHANCEMENT
+int SurfaceTextureClient::dispatchSetBuffersMetadata(va_list args) {
+    const char* metadata = va_arg(args, const char*);
+    return setBuffersMetadata(metadata);
+}
+#endif
+
 int SurfaceTextureClient::dispatchLock(va_list args) {
     ANativeWindow_Buffer* outBuffer = va_arg(args, ANativeWindow_Buffer*);
     ARect* inOutDirtyBounds = va_arg(args, ARect*);
@@ -445,6 +490,17 @@ int SurfaceTextureClient::performQcomOperation(int operation, int arg1,
     Mutex::Autolock lock(mMutex);
     int err = mSurfaceTexture->performQcomOperation(operation, arg1, arg2, arg3);
     return err;
+}
+#endif
+
+#ifdef OMAP_ENHANCEMENT
+int SurfaceTextureClient::dispatchSetBuffersLayout(va_list args) {
+    uint32_t bufLayout = va_arg(args, uint32_t);
+    return setBuffersLayout(bufLayout);
+}
+int SurfaceTextureClient::dispatchUpdateAndGetCurrent(va_list args) {
+    ANativeWindowBuffer** buffer = va_arg(args, ANativeWindowBuffer**);
+    return updateAndGetCurrent(buffer);
 }
 #endif
 
@@ -597,6 +653,35 @@ int SurfaceTextureClient::setBuffersTimestamp(int64_t timestamp)
     return NO_ERROR;
 }
 
+#ifdef OMAP_ENHANCEMENT
+int SurfaceTextureClient::setBuffersLayout(uint32_t bufLayout)
+{
+    LOGV("SurfaceTextureClient::setBuffersLayout");
+    Mutex::Autolock lock(mMutex);
+    status_t err = mSurfaceTexture->setLayout(bufLayout);
+    return NO_ERROR;
+}
+
+int SurfaceTextureClient::updateAndGetCurrent(android_native_buffer_t** buffer)
+{
+    LOGV("SurfaceTextureClient::updateAndGetCurrent");
+    status_t err = NO_ERROR;
+
+    Mutex::Autolock lock(mMutex);
+    err = mSurfaceTexture->updateAndGetCurrent(&mCurrentBuffer);
+    *buffer = mCurrentBuffer.get();
+    return err;
+}
+
+int SurfaceTextureClient::setBuffersMetadata(const char* metadata)
+{
+    LOGV("SurfaceTextureClient::setBuffersMetadata");
+    Mutex::Autolock lock(mMutex);
+    mMetadata = String8(metadata);
+    return NO_ERROR;
+}
+#endif
+
 void SurfaceTextureClient::freeAllBuffers() {
     for (int i = 0; i < NUM_BUFFER_SLOTS; i++) {
         mSlots[i] = 0;
@@ -740,8 +825,27 @@ status_t SurfaceTextureClient::lock(
 #ifdef QCOM_HARDWARE
             mOldDirtyRegion[backBufferidx] = newDirtyRegion;
 #else
+
+#ifndef OMAP_ENHANCEMENT
             mOldDirtyRegion = newDirtyRegion;
-#endif
+#else
+            // push the new dirty region to top the list and ignore
+            // the last one
+            int historySize = mOldDirtyRegionHistory.size();
+            Region* historyArray = mOldDirtyRegionHistory.editArray();
+            mOldDirtyRegion.clear();
+            // array indices start from zero to (size -1 )
+            for (int i = (historySize - 1); i > 0; i--) {
+                historyArray[i].clear();
+                if (canCopyBack) {
+                    historyArray[i].orSelf(historyArray[i-1]);
+                    mOldDirtyRegion.orSelf(historyArray[i]);
+                }
+            }
+            historyArray[0] = newDirtyRegion;
+            mOldDirtyRegion.orSelf(historyArray[0]);
+#endif // OMAP_ENHANCEMENT
+#endif // QCOM_HARDWARE
 
             if (inOutDirtyBounds) {
                 *inOutDirtyBounds = newDirtyRegion.getBounds();

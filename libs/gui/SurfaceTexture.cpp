@@ -160,6 +160,18 @@ SurfaceTexture::SurfaceTexture(GLuint tex, bool allowSynchronousMode,
     mNextBufferInfo.height = 0;
     mNextBufferInfo.format = 0;
 #endif
+#ifdef OMAP_ENHANCEMENT
+    mCurrentLayout = mNextLayout = NATIVE_WINDOW_BUFFERS_LAYOUT_PROGRESSIVE;
+    if (texTarget == EGL_NONE) {
+        mMinBufferSlots = 1;
+        // need at least one to avoid deadlock in client
+        mMinUndequeued = 1;
+    } else {
+        mMinBufferSlots =  mSynchronousMode ?
+            MIN_SYNC_BUFFER_SLOTS : MIN_ASYNC_BUFFER_SLOTS;
+        mMinUndequeued = MIN_UNDEQUEUED_BUFFERS - int(mSynchronousMode);
+    }
+#endif
 }
 
 SurfaceTexture::~SurfaceTexture() {
@@ -227,8 +239,12 @@ status_t SurfaceTexture::setBufferCount(int bufferCount) {
         }
     }
 
+#ifdef OMAP_ENHANCEMENT
+    const int minBufferSlots = mMinBufferSlots;
+#else
     const int minBufferSlots = mSynchronousMode ?
             MIN_SYNC_BUFFER_SLOTS : MIN_ASYNC_BUFFER_SLOTS;
+#endif
     if (bufferCount == 0) {
         mClientBufferCount = 0;
         bufferCount = (mServerBufferCount >= minBufferSlots) ?
@@ -328,10 +344,12 @@ status_t SurfaceTexture::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
             //
             // As long as this condition is true AND the FIFO is not empty, we
             // wait on mDequeueCondition.
-
+#ifdef OMAP_ENHANCEMENT
+            const int minBufferCountNeeded = mMinBufferSlots;
+#else
             const int minBufferCountNeeded = mSynchronousMode ?
                     MIN_SYNC_BUFFER_SLOTS : MIN_ASYNC_BUFFER_SLOTS;
-
+#endif
             const bool numberOfBuffersNeedsToChange = !mClientBufferCount &&
                     ((mServerBufferCount != mBufferCount) ||
                             (mServerBufferCount < minBufferCountNeeded));
@@ -423,6 +441,17 @@ status_t SurfaceTexture::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
             if (bufferHasBeenQueued) {
                 // make sure the client is not trying to dequeue more buffers
                 // than allowed.
+#ifdef OMAP_ENHANCEMENT
+                const int avail = mBufferCount - (dequeuedCount+1);
+                if (avail < mMinUndequeued) {
+                    ST_LOGE("dequeueBuffer: MIN_UNDEQUEUED_BUFFERS=%d exceeded "
+                            "(dequeued=%d)",
+                            mMinBufferSlots,
+                            dequeuedCount);
+                    return -EBUSY;
+                }
+            }
+#else
                 const int avail = mBufferCount - (dequeuedCount+1);
                 if (avail < (MIN_UNDEQUEUED_BUFFERS-int(mSynchronousMode))) {
 #ifdef MISSING_GRALLOC_BUFFERS
@@ -433,7 +462,7 @@ status_t SurfaceTexture::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
                                 "mBuffer:%d bumped\n", mBufferCount);
                         continue;
                     }
-#endif
+#endif // MISSING_GRALLOC_BUFFERS
                     ST_LOGE("dequeueBuffer: MIN_UNDEQUEUED_BUFFERS=%d exceeded "
                             "(dequeued=%d)",
                             MIN_UNDEQUEUED_BUFFERS-int(mSynchronousMode),
@@ -441,6 +470,7 @@ status_t SurfaceTexture::dequeueBuffer(int *outBuf, uint32_t w, uint32_t h,
                     return -EBUSY;
                 }
             }
+#endif // OMAP_ENHANCEMENT
 
             // we're in synchronous mode and didn't find a buffer, we need to
             // wait for some buffers to be consumed
@@ -601,11 +631,24 @@ status_t SurfaceTexture::setSynchronousMode(bool enabled) {
         mSynchronousMode = enabled;
         mDequeueCondition.signal();
     }
+#ifdef OMAP_ENHANCEMENT
+    if (mTexTarget != EGL_NONE) {
+        mMinBufferSlots =  mSynchronousMode ?
+            MIN_SYNC_BUFFER_SLOTS : MIN_ASYNC_BUFFER_SLOTS;
+        mMinUndequeued = MIN_UNDEQUEUED_BUFFERS - int(mSynchronousMode);
+    }
+#endif
     return err;
 }
 
+#ifdef OMAP_ENHANCEMENT
+status_t SurfaceTexture::queueBuffer(int buf, int64_t timestamp,
+        uint32_t* outWidth, uint32_t* outHeight, uint32_t* outTransform,
+        const String8& metadata) {
+#else
 status_t SurfaceTexture::queueBuffer(int buf, int64_t timestamp,
         uint32_t* outWidth, uint32_t* outHeight, uint32_t* outTransform) {
+#endif
     ST_LOGV("queueBuffer: slot=%d time=%lld", buf, timestamp);
 
     sp<FrameAvailableListener> listener;
@@ -665,6 +708,10 @@ status_t SurfaceTexture::queueBuffer(int buf, int64_t timestamp,
         mSlots[buf].mTimestamp = timestamp;
         mFrameCounter++;
         mSlots[buf].mFrameNumber = mFrameCounter;
+#ifdef OMAP_ENHANCEMENT
+        mSlots[buf].mMetadata = metadata;
+        mSlots[buf].mLayout = mNextLayout;
+#endif
 
 #ifdef QCOM_HARDWARE
         // Update the buffer Geometry if required
@@ -736,6 +783,33 @@ status_t SurfaceTexture::setTransform(uint32_t transform) {
     mNextTransform = transform;
     return OK;
 }
+
+#ifdef OMAP_ENHANCEMENT
+status_t SurfaceTexture::setLayout(uint32_t layout) {
+    ST_LOGV("SurfaceTexture::setLayout");
+    Mutex::Autolock lock(mMutex);
+    if (mAbandoned) {
+        ST_LOGE("setLayout: SurfaceTexture has been abandoned!");
+        return NO_INIT;
+    }
+    mNextLayout = layout;
+    return OK;
+}
+
+
+status_t SurfaceTexture::updateAndGetCurrent(sp<GraphicBuffer>* buf) {
+    ST_LOGV("updateAndGetCurrent");
+    Mutex::Autolock lock(mMutex);
+    if (mAbandoned) {
+        ST_LOGE("updateAndGetCurrent: SurfaceTexture has been abandoned!");
+        return NO_INIT;
+    }
+    // update tex image w/o lock
+    __updateTexImage(false);
+    *buf = mCurrentTextureBuf;
+    return NO_ERROR;
+}
+#endif
 
 status_t SurfaceTexture::connect(int api,
         uint32_t* outWidth, uint32_t* outHeight, uint32_t* outTransform) {
@@ -856,9 +930,19 @@ status_t SurfaceTexture::setScalingMode(int mode) {
     return OK;
 }
 
+#ifdef OMAP_ENHANCEMENT
+status_t SurfaceTexture::updateTexImage() {
+    return __updateTexImage(true);
+}
+
+status_t SurfaceTexture::__updateTexImage(bool lock) {
+    ST_LOGV("updateTexImage");
+    if (lock) Mutex::Autolock lock(mMutex);
+#else
 status_t SurfaceTexture::updateTexImage(bool isComposition) {
     ST_LOGV("updateTexImage");
     Mutex::Autolock lock(mMutex);
+#endif
 
     if (mAbandoned) {
         ST_LOGE("calling updateTexImage() on an abandoned SurfaceTexture");
@@ -870,7 +954,80 @@ status_t SurfaceTexture::updateTexImage(bool isComposition) {
     if (!mQueue.empty()) {
         Fifo::iterator front(mQueue.begin());
         int buf = *front;
+#ifdef OMAP_ENHANCEMENT
+        // TODO(XXX): Do not update texture object if user
+        // did not specify proper texture target. Hack for
+        // now to workaround SurfaceTexture dependency on
+        // texture
 
+        bool failed = false;
+
+        if (mTexTarget != EGL_NONE) {
+
+            // Update the GL texture object.
+            EGLImageKHR image = mSlots[buf].mEglImage;
+            EGLDisplay dpy = eglGetCurrentDisplay();
+            if (image == EGL_NO_IMAGE_KHR) {
+                if (mSlots[buf].mGraphicBuffer == 0) {
+                    ST_LOGE("buffer at slot %d is null", buf);
+                    return BAD_VALUE;
+                }
+                image = createImage(dpy, mSlots[buf].mGraphicBuffer);
+                mSlots[buf].mEglImage = image;
+                mSlots[buf].mEglDisplay = dpy;
+                if (image == EGL_NO_IMAGE_KHR) {
+                    // NOTE: if dpy was invalid, createImage() is guaranteed to
+                    // fail. so we'd end up here.
+                    return -EINVAL;
+                }
+            }
+
+            GLint error;
+            while ((error = glGetError()) != GL_NO_ERROR) {
+                ST_LOGW("updateTexImage: clearing GL error: %#04x", error);
+            }
+
+            glBindTexture(mTexTarget, mTexName);
+
+            // DIRTY HACK: we need to indicate specifically if texture size exceeds hardware limitations,
+            // so that Layer class can skip trying to draw it. Should be removed once proper solution on
+            // how to handle 1080p + VSTAB on SGX540 be implemented
+            GLint maxTextureSize;
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
+            if ((mSlots[buf].mGraphicBuffer->getHeight() > (uint32_t)maxTextureSize) ||
+                (mSlots[buf].mGraphicBuffer->getWidth() > (uint32_t)maxTextureSize))
+            {
+                LOGE("updateTexImage: error creating texture since it's size doesn't meet hardware limitations");
+                failed = true;
+            } else {
+                glEGLImageTargetTexture2DOES(mTexTarget, (GLeglImageOES)image);
+            }
+
+            while ((error = glGetError()) != GL_NO_ERROR) {
+                ST_LOGE("error binding external texture image %p (slot %d): %#04x",
+                        image, buf, error);
+                failed = true;
+            }
+
+            if (mCurrentTexture != INVALID_BUFFER_SLOT) {
+                if (mUseFenceSync) {
+                    EGLSyncKHR fence = eglCreateSyncKHR(dpy, EGL_SYNC_FENCE_KHR,
+                            NULL);
+                    if (fence == EGL_NO_SYNC_KHR) {
+                        LOGE("updateTexImage: error creating fence: %#x",
+                                eglGetError());
+                        return -EINVAL;
+                    }
+                }
+            }
+
+            ST_LOGV("updateTexImage: (slot=%d buf=%p) -> (slot=%d buf=%p)",
+                    mCurrentTexture,
+                    mCurrentTextureBuf != NULL ? mCurrentTextureBuf->handle : 0,
+                    buf, mSlots[buf].mGraphicBuffer->handle);
+        }
+#else
         // Update the GL texture object.
         EGLImageKHR image = mSlots[buf].mEglImage;
         EGLDisplay dpy = eglGetCurrentDisplay();
@@ -943,6 +1100,7 @@ status_t SurfaceTexture::updateTexImage(bool isComposition) {
                 mCurrentTextureBuf != NULL ? mCurrentTextureBuf->handle : 0,
                 buf, mSlots[buf].mGraphicBuffer->handle);
 
+#endif // OMAP_ENHANCEMENT
         if (mCurrentTexture != INVALID_BUFFER_SLOT) {
             // The current buffer becomes FREE if it was still in the queued
             // state. If it has already been given to the client
@@ -959,12 +1117,24 @@ status_t SurfaceTexture::updateTexImage(bool isComposition) {
         mCurrentTransform = mSlots[buf].mTransform;
         mCurrentScalingMode = mSlots[buf].mScalingMode;
         mCurrentTimestamp = mSlots[buf].mTimestamp;
+#ifdef OMAP_ENHANCEMENT
+        mCurrentLayout = mSlots[buf].mLayout;
+#endif
         computeCurrentTransformMatrix();
 
         // Now that we've passed the point at which failures can happen,
         // it's safe to remove the buffer from the front of the queue.
         mQueue.erase(front);
         mDequeueCondition.signal();
+
+#ifdef OMAP_ENHANCEMENT
+        // DIRTY HACK: in case texture size exceeds hardware limitations, we return EFBIG error code
+        // so that Layer class can skip trying to draw it. Should be removed once proper solution on
+        // how to handle 1080p + VSTAB on SGX540 be implemented
+        if (failed) {
+            return -EFBIG;
+        }
+#endif
     } else {
         // We always bind the texture even if we don't update its contents.
         glBindTexture(mTexTarget, mTexName);
@@ -1102,6 +1272,17 @@ nsecs_t SurfaceTexture::getTimestamp() {
     return mCurrentTimestamp;
 }
 
+#ifdef OMAP_ENHANCEMENT
+String8 SurfaceTexture::getMetadata() {
+    ST_LOGV("getMetadata");
+    Mutex::Autolock lock(mMutex);
+    if (mCurrentTexture !=INVALID_BUFFER_SLOT) {
+        return mSlots[mCurrentTexture].mMetadata;
+    }
+    return String8();
+}
+#endif
+
 void SurfaceTexture::setFrameAvailableListener(
         const sp<FrameAvailableListener>& listener) {
     ST_LOGV("setFrameAvailableListener");
@@ -1224,6 +1405,13 @@ bool SurfaceTexture::isSynchronousMode() const {
     return mSynchronousMode;
 }
 
+#ifdef OMAP_ENHANCEMENT
+uint32_t SurfaceTexture::getCurrentLayout() const {
+    Mutex::Autolock lock(mMutex);
+    return mCurrentLayout;
+}
+#endif
+
 int SurfaceTexture::query(int what, int* outValue)
 {
     Mutex::Autolock lock(mMutex);
@@ -1245,8 +1433,12 @@ int SurfaceTexture::query(int what, int* outValue)
         value = mPixelFormat;
         break;
     case NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS:
+#ifdef OMAP_ENHANCEMENT
+        value = mMinUndequeued;
+#else
         value = mSynchronousMode ?
                 (MIN_UNDEQUEUED_BUFFERS-1) : MIN_UNDEQUEUED_BUFFERS;
+#endif
         break;
 #ifdef QCOM_HARDWARE
     case NATIVE_WINDOW_NUM_BUFFERS:
