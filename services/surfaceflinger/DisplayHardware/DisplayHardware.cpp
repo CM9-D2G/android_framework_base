@@ -208,8 +208,9 @@ void DisplayHardware::init(uint32_t dpy)
         } else {
             // We have hardware composition enabled. Check the composition type
             if (property_get("debug.composition.type", property, NULL) > 0) {
-                if((strncmp(property, "c2d", 3)) == 0)
-                    mFlags |=  C2D_COMPOSITION;
+                if ((strncmp(property, "c2d", 3) == 0) ||
+                    (strncmp(property, "dyn", 3) == 0))
+                    mFlags |= C2D_COMPOSITION;
                 else if ((strncmp(property, "mdp", 3)) == 0)
                     mFlags |= MDP_COMPOSITION;
             }
@@ -451,16 +452,6 @@ void DisplayHardware::dump(String8& res) const
 #ifdef QCOM_HDMI_OUT
 void DisplayHardware::orientationChanged(int orientation) const
 {
-    mNativeWindow->orientationChanged(orientation);
-}
-
-void DisplayHardware::setActionSafeWidthRatio(float asWidthRatio) const
-{
-    mNativeWindow->setActionSafeWidthRatio(asWidthRatio);
-}
-
-void DisplayHardware::setActionSafeHeightRatio(float asHeightRatio) const
-{
-    mNativeWindow->setActionSafeHeightRatio(asHeightRatio);
+    mNativeWindow->orientationChanged(EVENT_ORIENTATION_CHANGE, orientation);
 }
 #endif
