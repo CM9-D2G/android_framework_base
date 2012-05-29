@@ -92,6 +92,11 @@ SetUnstableMemoryState(JNIEnv *env, jobject clazz, jboolean on)
     return set_unstable_memory_state(on);
 }
 
+static int android_os_Power_setDeepSleepState(JNIEnv *env, jobject clazz, jboolean on)
+{
+    return set_deepsleep_state(on);
+}
+
 static JNINativeMethod method_table[] = {
     { "acquireWakeLock", "(ILjava/lang/String;)V", (void*)acquireWakeLock },
     { "releaseWakeLock", "(Ljava/lang/String;)V", (void*)releaseWakeLock },
@@ -100,6 +105,7 @@ static JNINativeMethod method_table[] = {
     { "shutdown", "()V", (void*)android_os_Power_shutdown },
     { "rebootNative", "(Ljava/lang/String;)V", (void*)android_os_Power_reboot },
     { "SetUnstableMemoryState",  "(Z)I", (void*)SetUnstableMemoryState},
+    { "setDeepSleep", "(Z)I", (void*)android_os_Power_setDeepSleepState }
 };
 
 int register_android_os_Power(JNIEnv *env)
