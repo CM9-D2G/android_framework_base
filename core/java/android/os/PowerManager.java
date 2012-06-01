@@ -442,14 +442,6 @@ public class PowerManager
         }
     }
 
-    public void goToDeepSleep(boolean paramBoolean, long time)
-    {
-        try {
-            mService.goToDeepSleep(paramBoolean, time);
-        } catch (RemoteException e) {
-        }
-    }
-
    /**
      * Force the device to go to sleep. Overrides all the wake locks that are
      * held.
