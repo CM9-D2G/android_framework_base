@@ -1358,7 +1358,8 @@ sp<GraphicBuffer> SurfaceTexture::takeCurrentBuffer() {
 void SurfaceTexture::releaseBuffer(sp<GraphicBuffer> graphic_buffer) {
     Mutex::Autolock lock(mMutex);
     for (int i=0 ; i<mBufferCount ; i++) {
-        if (mSlots[i].mGraphicBuffer->handle == graphic_buffer->handle) {
+        if ((mSlots[i].mGraphicBuffer != NULL) &&
+            (mSlots[i].mGraphicBuffer->handle == graphic_buffer->handle)) {
             if (mSlots[i].mBufferState != BufferSlot::TAKEN) {
                 ST_LOGE("buffer not in TAKEN state");
                 return;
