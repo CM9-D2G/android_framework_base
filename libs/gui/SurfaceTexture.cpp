@@ -1071,6 +1071,14 @@ void SurfaceTexture::computeCurrentTransformMatrix() {
         if (mCurrentCrop.top > 0) {
             yshrink++;
         }
+#ifdef OMAP_ENHANCEMENT_CPCAM
+        // Don't need to take into account shrink if there is no texture
+        // target
+        if (mTexTarget == EGL_NONE) {
+            xshrink = 0;
+            yshrink = 0;
+        }
+#endif
         sx = float(mCurrentCrop.width() - xshrink) / float(buf->getWidth());
         sy = float(mCurrentCrop.height() - yshrink) / float(buf->getHeight());
     } else {
