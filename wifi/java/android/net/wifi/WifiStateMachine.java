@@ -1351,7 +1351,7 @@ public class WifiStateMachine extends StateMachine {
                         scanResult.frequency = frequency;
                     } else {
                         // Do not add scan results that have no SSID set
-                        if (0 < ssid.trim().length()) {
+                        if (0 < ssid.length()) {
                             scanResult =
                                 new ScanResult(
                                     ssid, bssid, flags, level, frequency);
@@ -1417,7 +1417,7 @@ public class WifiStateMachine extends StateMachine {
         // extract ssid from a series of "name=value"
         String[] lines = status.split("\n");
         for (String line : lines) {
-            String[] prop = line.split(" *= *");
+            String[] prop = line.split(" *=", 2);
             if (prop.length < 2) continue;
             String name = prop[0];
             String value = prop[1];
