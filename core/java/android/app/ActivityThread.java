@@ -3918,7 +3918,7 @@ public final class ActivityThread {
         if (HardwareRenderer.sRendererDisabled) {
             Slog.d(TAG, "hwui is disabled, skipping blacklist check");
         } else {
-            hwuiBlacklist = SystemProperties.get("hwui.blacklist", "0");
+            hwuiBlacklist = SystemProperties.get("hwui.blacklist", "");
             if (hwuiBlacklist.equals("0") || hwuiBlacklist.contains(data.processName)) {
                 Slog.d(TAG, "hwui is blacklisted for " + data.processName);
                 HardwareRenderer.disable(false);
