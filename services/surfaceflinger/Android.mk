@@ -1,6 +1,13 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
+ifeq ($(MAKECMDGOALS), sdk_addon)
+ifeq ($(TARGET_PRODUCT), s3d)
+OMAP_ENHANCEMENT_S3D := true
+LOCAL_CPPFLAGS += -DOMAP_ENHANCEMENT_S3D
+endif
+endif
+
 ifeq ($(BOARD_HAVE_CODEC_SUPPORT),SAMSUNG_CODEC_SUPPORT)
 LOCAL_CFLAGS     += -DSAMSUNG_CODEC_SUPPORT
 endif
@@ -19,6 +26,14 @@ LOCAL_SRC_FILES:= \
     SurfaceFlinger.cpp 						\
     SurfaceTextureLayer.cpp 				\
     Transform.cpp
+
+ifdef OMAP_ENHANCEMENT_S3D
+LOCAL_SRC_FILES += \
+    S3DSurfaceFlinger.cpp                   \
+    OmapLayer.cpp                           \
+    OmapLayerScreenshot.cpp                 \
+    DisplayHardware/S3DHardware.cpp
+endif
 
 LOCAL_CFLAGS:= -DLOG_TAG=\"SurfaceFlinger\"
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
