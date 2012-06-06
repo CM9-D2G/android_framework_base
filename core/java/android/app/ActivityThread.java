@@ -3920,7 +3920,7 @@ public final class ActivityThread {
         } else {
             hwuiBlacklist = SystemProperties.get("hwui.blacklist", "0");
             if (hwuiBlacklist.equals("0") || hwuiBlacklist.contains(data.processName)) {
-                Slog.d(TAG, "hwui is blacklisted for " + data.info.getPackageName());
+                Slog.d(TAG, "hwui is blacklisted for " + data.processName);
                 HardwareRenderer.disable(false);
             }
         }
