@@ -88,6 +88,7 @@ private:
     bool isPaused;
     bool mSeeked;
     bool a2dpDisconnectPause;
+    bool a2dpResumeAfterReConnect;
     bool a2dpThreadStarted;
     volatile bool asyncReset;
     bool eventThreadCreated;
@@ -270,6 +271,7 @@ private:
     bool mSeeking;
     bool mInternalSeeking;
     bool mReachedEOS;
+    bool mReachedOutputEOS;
     status_t mFinalStatus;
     int64_t mSeekTimeUs;
     int64_t mPauseTime;
