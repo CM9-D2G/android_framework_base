@@ -3139,6 +3139,12 @@ public class WifiStateMachine extends StateMachine {
                      * and handle the rest of the events there
                      */
                     deferMessage(message);
+
+                    /* TI WLAN-specific */
+                    if (SystemProperties.getBoolean("wifi.hotspot.ti", false)) {
+                    //    handlePostDhcpSetup();
+                    }
+
                     handleNetworkDisconnect();
                     transitionTo(mDisconnectedState);
                     break;
