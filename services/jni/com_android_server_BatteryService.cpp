@@ -272,28 +272,33 @@ static void android_server_BatteryService_update(JNIEnv* env, jobject obj)
     if (property_get("ro.product.use_charge_counter", valueChargeCounter, NULL) &&
         (!strcmp(valueChargeCounter, "1"))) {
 
-        if (readFromFile(gPaths.batteryChargeCounterPath, value, 4))
+        if (readFromFile(gPaths.batteryChargeCounterPath, value, 4)) {
             counter = atoi(value);
+        }
 
-        if (counter <= 10)
+        if (counter <= 10) {
+            /* Battery is less than 10%, use 1% increment */
             capacity = counter;
-        else {
-            if (readFromFile(gPaths.batteryCapacityPath, value, 4))
+        } else {
+            if (readFromFile(gPaths.batteryCapacityPath, value, 4)) {
                 capacity = atoi(value);
+            }
 
             /* Smooth out Motorola charge_counter erratas */
             absolute = labs(capacity - counter);
             if (absolute >= 10) {
                 capacity = ceil((counter + capacity) / 2);
-                LOGW("charge_counter reported '%d' while capacity reported '%d'",
-                     counter, capacity);
-            } else
+            } else {
                 capacity = counter;
+            }
 
-            /* sanity check for buggy drivers that
-             * provide bogus values, e.g. 103% */
-            if (capacity >= 100)
+            /*
+             * Sanity check for buggy drivers that
+             * provide bogus values, e.g. 103%
+             */
+            if (capacity >= 100) {
                 capacity = 100;
+            }
         }
         env->SetIntField(obj, gFieldIds.mBatteryLevel, capacity);
     } else {
