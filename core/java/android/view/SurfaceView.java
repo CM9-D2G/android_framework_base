@@ -531,7 +531,7 @@ public class SurfaceView extends View {
                     mSurface.transferFrom(mNewSurface);
 
                     if (visible) {
-                        if (!mSurfaceCreated && (surfaceChanged || visibleChanged)) {
+                        if (!mSurfaceCreated && (surfaceChanged || visibleChanged) && mSurface.isValid()) {
                             mSurfaceCreated = true;
                             mIsCreating = true;
                             if (DEBUG) Log.i(TAG, "visibleChanged -- surfaceCreated");
