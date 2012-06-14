@@ -1073,6 +1073,22 @@ class AppWidgetService extends IAppWidgetService.Stub
         }
     }
 
+    public int[] getAllAppWidgetIds() {
+        final int callingUid = getCallingUid();
+        // Only allow root or system user to call this API
+        if (callingUid == 0 || callingUid == android.os.Process.SYSTEM_UID) {
+            synchronized (mAppWidgetIds) {
+                final int N = mAppWidgetIds.size();
+                int[] IDs = new int[N];
+                for (int i=0; i<N; i++) {
+                    IDs[i] = mAppWidgetIds.get(i).appWidgetId;
+                }
+                return IDs;
+            }
+        }
+        return new int[0];
+    }
+
     private Provider parseProviderInfoXml(ComponentName component, ResolveInfo ri) {
         Provider p = null;
 

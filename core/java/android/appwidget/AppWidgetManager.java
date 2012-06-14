@@ -498,5 +498,20 @@ public class AppWidgetManager {
             throw new RuntimeException("system server dead?", e);
         }
     }
+
+    /**
+     * Get the list of all appWidgetIds that have been bound to any of the
+     * installed AppWidget providers.
+     *
+     * @hide
+     */
+    public int[] getAllAppWidgetIds() {
+        try {
+            return sService.getAllAppWidgetIds();
+        }
+        catch (RemoteException e) {
+            throw new RuntimeException("system server dead?", e);
+        }
+    }
 }
 

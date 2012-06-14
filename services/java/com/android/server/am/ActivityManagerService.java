@@ -53,6 +53,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.backup.IBackupManager;
+import android.appwidget.AppWidgetManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentCallbacks2;
@@ -12469,6 +12470,61 @@ public final class ActivityManagerService extends ActivityManagerNative
             if (DEBUG_BROADCAST) {
                 int seq = r.intent.getIntExtra("seq", -1);
                 Slog.i(TAG, "Enqueueing broadcast " + r.intent.getAction() + " seq=" + seq);
+            }
+            String act = intent.getAction();
+            if (receivers != null && receivers.size() > 0 &&
+                    AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(act) &&
+                    intent.getComponent() == null) {
+                // There could be many widgets in the system. If any widget update
+                // intent will be broadcasted to all widgets, the system could become
+                // considerable slow.
+                // Filter out the receivers which is not part of the array of
+                // EXTRA_APPWIDGET_IDS defined in the intent.
+                AppWidgetManager awm = AppWidgetManager.getInstance(mContext);
+                Bundle extras = intent.getExtras();
+                int[] ids = null;
+
+                final long origId = Binder.clearCallingIdentity();
+                if (extras != null) {
+                    ids = extras.getIntArray(AppWidgetManager.EXTRA_APPWIDGET_IDS);
+                    if (ids == null || ids.length == 0) {
+                        if (extras.containsKey(AppWidgetManager.EXTRA_APPWIDGET_ID)) {
+                            ids = new int[] {extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID)};
+                        } else {
+                            // None of the two extra fields is set, let's get all the widget
+                            // instances that have been bound to a provider
+                            ids = awm.getAllAppWidgetIds();
+                        }
+                    }
+                } else {
+                    // No widget ID is specified, update the providers with bound IDs only.
+                    ids = awm.getAllAppWidgetIds();
+                }
+
+                ArrayList<ComponentName> comp = new ArrayList<ComponentName>();
+                for (int i: ids) {
+                    comp.add(awm.getAppWidgetInfo(i).provider);
+                }
+                Binder.restoreCallingIdentity(origId);
+
+                Iterator iter = receivers.iterator();
+                while (iter.hasNext()) {
+                    Object o = iter.next();
+                    if (o instanceof BroadcastFilter) {
+                        // This is a registered receiver and its process is alive now.
+                        // Let's keep it.
+                    } else if (o instanceof ResolveInfo) {
+                        ResolveInfo info = (ResolveInfo)o;
+                        ComponentName cn = new ComponentName(
+                                info.activityInfo.applicationInfo.packageName,
+                                info.activityInfo.name);
+                        if (!comp.contains(cn)) {
+                            if (DEBUG_BROADCAST) Slog.v(TAG,
+                                    "Dropping unnecessary receiver "+cn+" to get "+intent);
+                            iter.remove();
+                        }
+                    }
+                }
             }
             boolean replaced = false;
             if (replacePending) {
