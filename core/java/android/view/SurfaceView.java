@@ -31,7 +31,6 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemProperties;
 import android.util.AttributeSet;
 import android.util.Log;
 
