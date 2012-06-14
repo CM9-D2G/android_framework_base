@@ -82,14 +82,8 @@ protected:
     // outWidth, outHeight and outTransform are filled with the default width
     // and height of the window and current transform applied to buffers,
     // respectively.
-#ifdef OMAP_ENHANCEMENT
-    virtual status_t queueBuffer(int slot, int64_t timestamp,
-            uint32_t* outWidth, uint32_t* outHeight, uint32_t* outTransform,
-            const String8& metadata) = 0;
-#else
     virtual status_t queueBuffer(int slot, int64_t timestamp,
             uint32_t* outWidth, uint32_t* outHeight, uint32_t* outTransform) = 0;
-#endif
 
     // cancelBuffer indicates that the client does not wish to fill in the
     // buffer associated with slot and transfers ownership of the slot back to
@@ -145,15 +139,6 @@ protected:
     // specified in the operation are invalid.
     virtual status_t performQcomOperation(int operation, int arg1, int  arg2,
                                           int arg3) = 0;
-#endif
-
-#ifdef OMAP_ENHANCEMENT
-    //method to set the buffer layout
-    virtual status_t setLayout(uint32_t layout) = 0;
-
-    // updateAndGetCurrent updates to the current image and gives the ownership
-    // of the buffer to the client
-    virtual status_t updateAndGetCurrent(sp<GraphicBuffer>* buf) = 0;
 #endif
 
 };

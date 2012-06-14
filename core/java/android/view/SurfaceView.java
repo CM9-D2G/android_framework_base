@@ -519,15 +519,6 @@ public class SurfaceView extends View {
                         }
                     }
 
-                    if (SystemProperties.OMAP_ENHANCEMENT) {
-                        if (!mNewSurface.isValid()) {
-                            // If the surface is invalid, it makes no sense to do
-                            // anything with it (e.g. mark it for redraw, etc).
-
-                            return;
-                        }
-                    }
-
                     mSurface.transferFrom(mNewSurface);
 
                     if (visible) {

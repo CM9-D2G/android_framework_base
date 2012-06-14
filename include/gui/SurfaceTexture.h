@@ -48,13 +48,6 @@ public:
     enum { NUM_BUFFER_SLOTS = 32 };
     enum { NO_CONNECTED_API = 0 };
 
-#ifdef OMAP_ENHANCEMENT
-    enum {
-        MIN_SURFACEFLINGERCLIENT_BUFFERS = 2,
-        MAX_SURFACEFLINGERCLIENT_BUFFERS
-    };
-#endif
-
     struct FrameAvailableListener : public virtual RefBase {
         // onFrameAvailable() is called from queueBuffer() each time an
         // additional frame becomes available for consumption. This means that
@@ -104,15 +97,8 @@ public:
     // nanoseconds, and must be monotonically increasing. Its other semantics
     // (zero point, etc) are client-dependent and should be documented by the
     // client.
-#ifdef OMAP_ENHANCEMENT
-    virtual status_t queueBuffer(int buf, int64_t timestamp,
-            uint32_t* outWidth, uint32_t* outHeight, uint32_t* outTransform,
-            const String8& metadata);
-#else
     virtual status_t queueBuffer(int buf, int64_t timestamp,
             uint32_t* outWidth, uint32_t* outHeight, uint32_t* outTransform);
-#endif
-
     virtual void cancelBuffer(int buf);
     virtual status_t setCrop(const Rect& reg);
     virtual status_t setTransform(uint32_t transform);
@@ -190,12 +176,6 @@ public:
     // documented by the source.
     int64_t getTimestamp();
 
-#ifdef OMAP_ENHANCEMENT
-    // getMetadata retrieves the metadata information for the texture from
-    // the current slot
-    String8 getMetadata();
-#endif
-
     // setFrameAvailableListener sets the listener object that will be notified
     // when a new frame becomes available.
     void setFrameAvailableListener(const sp<FrameAvailableListener>& listener);
@@ -254,23 +234,6 @@ public:
     // dump our state in a String
     void dump(String8& result) const;
     void dump(String8& result, const char* prefix, char* buffer, size_t SIZE) const;
-
-#ifdef OMAP_ENHANCEMENT
-    //sets the layout for the buffers
-    virtual status_t setLayout(uint32_t layout);
-    // getCurrentLayout returns the layout of the current buffer
-    uint32_t getCurrentLayout() const;
-
-    // updateAndGetCurrent updates to the current buffer and returns
-    virtual status_t updateAndGetCurrent(sp<GraphicBuffer>* buf);
-
-    // updateTexImage sets the image contents of the target texture to that of
-    // the most recently queued buffer.
-    //
-    // This call may only be made while the OpenGL ES context to which the
-    // target texture belongs is bound to the calling thread.
-    status_t __updateTexImage(bool lock = true);
-#endif
 
 protected:
 
@@ -404,16 +367,6 @@ private:
         // to EGL_NO_SYNC_KHR when the buffer is created and (optionally, based
         // on a compile-time option) set to a new sync object in updateTexImage.
         EGLSyncKHR mFence;
-
-#ifdef OMAP_ENHANCEMENT
-        // mLayout is the current layout of the buffer for this buffer slot. This gets
-        // set to mNextLayout each time queueBuffer gets called for this buffer.
-        uint32_t mLayout;
-
-        // mMetadata is a flattened string pertaining to some metadata for this
-        // slot. Content of metadata may be different dependeing on usecase
-        String8 mMetadata;
-#endif
     };
 
     // mSlots is the array of buffer slots that must be mirrored on the client
@@ -576,20 +529,6 @@ private:
      };
  
      BufferInfo mNextBufferInfo;
-#endif
-
-#ifdef OMAP_ENHANCEMENT
-    // current and next layout for the buffers
-    uint32_t mCurrentLayout;
-    uint32_t mNextLayout;
-
-    // mMinBufferSlots is the mininum number of buffers/slots that SurfaceTexture needs
-    // to have.
-    int mMinBufferSlots;
-
-    // mMinUndequeued is the minimum number of buffers that needs to be owned by
-    // SurfaceTexture
-    int mMinUndequeued;
 #endif
 
 };
