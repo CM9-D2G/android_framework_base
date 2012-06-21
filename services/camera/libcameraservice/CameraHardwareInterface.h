@@ -459,15 +459,16 @@ private:
         CameraHardwareInterface *__this =
                 static_cast<CameraHardwareInterface *>(user);
         if (data != NULL) {
-          sp<CameraHeapMemory> mem(static_cast<CameraHeapMemory *>(data->handle));
-          if (index >= mem->mNumBufs) {
-            LOGE("%s: invalid buffer index %d, max allowed is %d", __FUNCTION__,
-                 index, mem->mNumBufs);
-            return;
-          }
-          __this->mDataCb(msg_type, mem->mBuffers[index], metadata, __this->mCbUser);
+            sp<CameraHeapMemory> mem(static_cast<CameraHeapMemory *>(data->handle));
+            if (index >= mem->mNumBufs) {
+                LOGE("%s: invalid buffer index %d, max allowed is %d", __FUNCTION__,
+                    index, mem->mNumBufs);
+                return;
+            }
+            __this->mDataCb(msg_type, mem->mBuffers[index], metadata, __this->mCbUser);
         } else {
-          __this->mDataCb(msg_type, NULL, metadata, __this->mCbUser);
+            LOGW("%s: QCOM CHANGE ! Null Buffer Data Callback", __FUNCTION__);
+            __this->mDataCb(msg_type, NULL, metadata, __this->mCbUser);
         }
     }
 
