@@ -2185,6 +2185,23 @@ void ACodec::UninitializedState::onSetup(
             ++matchIndex) {
         componentName = matchingCodecs.itemAt(matchIndex).string();
 
+	int32_t width = 0, height = 0;
+
+	if (!strncasecmp(mime.c_str(), "video/", 6)) {
+		msg->findInt32("width", &width);
+		msg->findInt32("height", &height);
+		if ((width * height) <= 414720) {
+			if (strcmp(componentName.c_str(),
+				"OMX.TI.Video.Decoder")) {
+				continue;
+			}
+		}
+	} else if (!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_AUDIO_AAC)) {
+		if (strcmp(componentName.c_str(), "OMX.google.aac.decoder")) {
+			continue;
+		}
+	}
+
         pid_t tid = androidGetTid();
         int prevPriority = androidGetThreadPriority(tid);
         androidSetThreadPriority(tid, ANDROID_PRIORITY_FOREGROUND);
