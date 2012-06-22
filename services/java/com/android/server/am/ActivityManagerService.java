@@ -14097,7 +14097,7 @@ public final class ActivityManagerService extends ActivityManagerNative
            could be pending on the provider process even though its adj level
            has been updated in the meantime.
            (see the comments in getContentProviderImpl) */
-        if (app.pubProviders.size() != 0 && adj > ProcessList.FOREGROUND_APP_ADJ
+        if (app.pubProviders.size() != 0 && adj > ProcessList.PERCEPTIBLE_APP_ADJ
                 && app.setAdj == ProcessList.FOREGROUND_APP_ADJ) {
             app.adjType = "ex-provider";
             adj = ProcessList.PERCEPTIBLE_APP_ADJ;
