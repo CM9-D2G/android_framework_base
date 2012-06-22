@@ -162,7 +162,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     static final boolean DEBUG_SWITCH = localLOGV || false;
     static final boolean DEBUG_TASKS = localLOGV || false;
     static final boolean DEBUG_PAUSE = localLOGV || false;
-    static final boolean DEBUG_OOM_ADJ = localLOGV || true;
+    static final boolean DEBUG_OOM_ADJ = localLOGV || false;
     static final boolean DEBUG_TRANSITION = localLOGV || false;
     static final boolean DEBUG_BROADCAST = localLOGV || false;
     static final boolean DEBUG_BROADCAST_LIGHT = DEBUG_BROADCAST || false;
@@ -170,7 +170,7 @@ public final class ActivityManagerService extends ActivityManagerNative
     static final boolean DEBUG_SERVICE_EXECUTING = localLOGV || false;
     static final boolean DEBUG_VISBILITY = localLOGV || false;
     static final boolean DEBUG_PROCESSES = localLOGV || false;
-    static final boolean DEBUG_PROVIDER = localLOGV || true;
+    static final boolean DEBUG_PROVIDER = localLOGV || false;
     static final boolean DEBUG_URI_PERMISSION = localLOGV || false;
     static final boolean DEBUG_USER_LEAVING = localLOGV || false;
     static final boolean DEBUG_RESULTS = localLOGV || false;
