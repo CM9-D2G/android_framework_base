@@ -451,6 +451,7 @@ public class BitmapDrawable extends Drawable {
         mBitmapState.mBitmap = bitmap;
         setBitmap(bitmap);
         setTargetDensity(r.getDisplayMetrics());
+        mBitmapState.mTargetDensity = mTargetDensity;
 
         final Paint paint = mBitmapState.mPaint;
         paint.setAntiAlias(a.getBoolean(com.android.internal.R.styleable.BitmapDrawable_antialias,
