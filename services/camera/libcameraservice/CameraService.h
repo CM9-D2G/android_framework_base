@@ -182,7 +182,6 @@ private:
         int                             mPreviewCallbackFlag;
         int                             mOrientation;     // Current display orientation
         bool                            mPlayShutterSound;
-        bool                            mFaceDetection;
 
         // Ensures atomicity among the public methods
         mutable Mutex                   mLock;
