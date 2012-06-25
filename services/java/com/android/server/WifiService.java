@@ -86,7 +86,7 @@ import com.android.internal.R;
 
 public class WifiService extends IWifiManager.Stub {
     private static final String TAG = "WifiService";
-    private static final boolean DBG = false;
+    private static final boolean DBG = SystemProperties.getBoolean("wifi.debug", false);
 
     private final WifiStateMachine mWifiStateMachine;
 

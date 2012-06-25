@@ -107,7 +107,7 @@ public class WifiStateMachine extends StateMachine {
 
     private static final String TAG = "WifiStateMachine";
     private static final String NETWORKTYPE = "WIFI";
-    private static final boolean DBG = false;
+    private static final boolean DBG = SystemProperties.getBoolean("wifi.debug", false);
 
     /* TODO: This is no more used with the hostapd code. Clean up */
     private String mSoftApIface;
