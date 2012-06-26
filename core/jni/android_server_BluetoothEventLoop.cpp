@@ -303,7 +303,6 @@ static jboolean setUpEventLoop(native_data_t *nat) {
             LOG_AND_FREE_DBUS_ERROR(&err);
             return JNI_FALSE;
         }
-#endif
 
         dbus_bus_add_match(nat->conn,
                 "type='signal',interface='org.bluez.AudioSink'",
@@ -510,14 +509,6 @@ static void tearDownEventLoop(native_data_t *nat) {
         if (dbus_error_is_set(&err)) {
             LOG_AND_FREE_DBUS_ERROR(&err);
         }
-#ifdef BLUETI_ENHANCEMENT
-        dbus_bus_remove_match(nat->conn,
-                "type='signal',interface='"BLUEZ_DBUS_BASE_IFC".Characteristic'",
-                &err);
-        if (dbus_error_is_set(&err)) {
-            LOG_AND_FREE_DBUS_ERROR(&err);
-        }
-#endif
         dbus_bus_remove_match(nat->conn,
                 "type='signal',interface='org.freedesktop.DBus'",
                 &err);
