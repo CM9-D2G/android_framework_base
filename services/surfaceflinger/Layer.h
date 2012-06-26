@@ -112,6 +112,9 @@ private:
     Rect mCurrentCrop;
     uint32_t mCurrentTransform;
     uint32_t mCurrentScalingMode;
+#ifdef OMAP_ENHANCEMENT
+    uint32_t mCurrentLayout;
+#endif
     bool mCurrentOpacity;
 
     // constants
@@ -131,6 +134,10 @@ private:
 #ifdef QCOM_HARDWARE
     // Qcom specific flags for this layer.
     int mLayerQcomFlags;
+#endif
+
+#ifdef OMAP_ENHANCEMENT
+    bool mTextureSizeTooLarge;
 #endif
 };
 
