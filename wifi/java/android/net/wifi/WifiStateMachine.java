@@ -2701,7 +2701,7 @@ public class WifiStateMachine extends StateMachine {
                     SupplicantState state = handleSupplicantStateChange(message);
                     if (DBG) log("Supplicant state is "+state);
                     if (state == SupplicantState.INTERFACE_DISABLED) {
-                        log("Received INTERFACE_DISABLED message :)");
+                        if (DBG) log("Received INTERFACE_DISABLED message");
                         transitionTo(mDriverStoppedState);
                     }
                     else if (state == SupplicantState.DISCONNECTED) {
@@ -2710,10 +2710,7 @@ public class WifiStateMachine extends StateMachine {
                     break;
 
                 case CMD_ENABLE_ALL_NETWORKS:
-                    loge("ENABLE_ALL_NETWORKS command received in stopping state, restarting wifi :-(");
-
-                    //WifiNative.killSupplicant();
-
+                    loge("ENABLE_ALL_NETWORKS command received in stopping state, restarting wifi");
                     // send DRIVER_HUNG_EVENT to mDefaultState to disable/enable the wifi...
                     transitionTo(mDefaultState);
                     sendMessage(WifiMonitor.DRIVER_HUNG_EVENT);
