@@ -202,8 +202,6 @@ public class WifiStateMachine extends StateMachine {
     private static final int EVENTLOG_WIFI_EVENT_HANDLED        = 50022;
     private static final int EVENTLOG_SUPPLICANT_STATE_CHANGED  = 50023;
 
-    private static final int FORCE_STOPPED_STATE               = 999999;
-
     /* The base for wifi message types */
     static final int BASE = Protocol.BASE_WIFI;
     /* Load the driver */
@@ -361,6 +359,11 @@ public class WifiStateMachine extends StateMachine {
     /* Interaction with WifiP2pService */
     public static final int WIFI_ENABLE_PENDING           = BASE + 131;
     public static final int P2P_ENABLE_PROCEED            = BASE + 132;
+
+
+    /* wpa_supplicant v6 doesnt report the intf disabled event */
+    static final int CMD_FORCE_STOPPED_STATE              = BASE + 153; // 0x20099
+
 
     private static final int CONNECT_MODE   = 1;
     private static final int SCAN_ONLY_MODE = 2;
@@ -2668,7 +2671,7 @@ public class WifiStateMachine extends StateMachine {
         public void enter() {
             if (DBG) log(getName() + "\n");
             EventLog.writeEvent(EVENTLOG_WIFI_STATE_CHANGED, getName());
-            sendMessageDelayed(FORCE_STOPPED_STATE, 2000);
+            sendMessageDelayed(CMD_FORCE_STOPPED_STATE, 2000);
         }
 
         /* If the supplicant doesnt report the interface down event,
@@ -2694,18 +2697,16 @@ public class WifiStateMachine extends StateMachine {
         public boolean processMessage(Message message) {
             if (DBG) log(getName() + message.toString() + "\n");
             switch(message.what) {
-                case FORCE_STOPPED_STATE:
+                case CMD_FORCE_STOPPED_STATE:
+                    log("forced stopped state");
                     forceTransitionToStopped(SupplicantState.INTERFACE_DISABLED);
                     break;
                 case WifiMonitor.SUPPLICANT_STATE_CHANGE_EVENT:
                     SupplicantState state = handleSupplicantStateChange(message);
                     if (DBG) log("Supplicant state is "+state);
                     if (state == SupplicantState.INTERFACE_DISABLED) {
-                        if (DBG) log("Received INTERFACE_DISABLED message");
+                        log("Received INTERFACE_DISABLED message");
                         transitionTo(mDriverStoppedState);
-                    }
-                    else if (state == SupplicantState.DISCONNECTED) {
-                        forceTransitionToStopped(state);
                     }
                     break;
 
