@@ -119,8 +119,6 @@ const char CameraParameters::KEY_SMOOTH_ZOOM_SUPPORTED[] = "smooth-zoom-supporte
 const char CameraParameters::KEY_FOCUS_DISTANCES[] = "focus-distances";
 const char CameraParameters::KEY_VIDEO_FRAME_FORMAT[] = "video-frame-format";
 #ifdef QCOM_HARDWARE
-const char CameraParameters::KEY_ISO_MODE[] = "iso";
-const char CameraParameters::KEY_SUPPORTED_ISO_MODES[] = "iso-values";
 const char CameraParameters::KEY_LENSSHADE[] = "lensshade";
 const char CameraParameters::KEY_SUPPORTED_LENSSHADE_MODES[] = "lensshade-values";
 const char CameraParameters::KEY_AUTO_EXPOSURE[] = "auto-exposure";
@@ -139,11 +137,17 @@ const char CameraParameters::KEY_REDEYE_REDUCTION[] = "redeye-reduction";
 const char CameraParameters::KEY_SUPPORTED_REDEYE_REDUCTION[] = "redeye-reduction-values";
 const char CameraParameters::KEY_HIGH_DYNAMIC_RANGE_IMAGING[] = "hdr";
 const char CameraParameters::KEY_SUPPORTED_HDR_IMAGING_MODES[] = "hdr-values";
+#ifndef SAMSUNG_CAMERA_HARDWARE
+const char CameraParameters::KEY_ISO_MODE[] = "iso";
+const char CameraParameters::KEY_SUPPORTED_ISO_MODES[] = "iso-values";
+#endif
 #endif
 #ifdef SAMSUNG_CAMERA_HARDWARE
 const char CameraParameters::KEY_METERING[] = "metering";
 const char CameraParameters::KEY_WDR[] = "wdr";
 const char CameraParameters::KEY_ANTI_SHAKE_MODE[] = "anti-shake";
+const char CameraParameters::KEY_ISO_MODE[] = "iso";
+const char CameraParameters::KEY_SUPPORTED_ISO_MODES[] = "iso-values";
 #endif
 const char CameraParameters::KEY_VIDEO_SIZE[] = "video-size";
 const char CameraParameters::KEY_SUPPORTED_VIDEO_SIZES[] = "video-size-values";
