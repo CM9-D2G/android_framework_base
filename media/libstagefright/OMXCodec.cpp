@@ -2033,9 +2033,6 @@ status_t OMXCodec::setVideoOutputFormat(
 
     video_def->nFrameWidth = width;
     video_def->nFrameHeight = height;
-#ifdef OMAP_ENHANCEMENT
-    video_def->xFramerate = mVideoFPS << 16;
-#endif
 
     video_def->eCompressionFormat = compressionFormat;
     video_def->eColorFormat = OMX_COLOR_FormatUnused;
@@ -5946,9 +5943,6 @@ void OMXCodec::initOutputFormat(const sp<MetaData> &inputFormat) {
 
                 if (mNativeWindow != NULL) {
                      initNativeWindowCrop();
-#ifdef OMAP_ENHANCEMENT
-                     native_window_set_buffers_layout(mNativeWindow.get(), layout);
-#endif
                 }
 #ifdef QCOM_HARDWARE
             } else {
