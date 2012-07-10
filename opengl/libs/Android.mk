@@ -1,7 +1,5 @@
 LOCAL_PATH:= $(call my-dir)
 
-FLTO_FLAG=$(call cc-option,"-flto", )
-
 ###############################################################################
 # Build META EGL library
 #
@@ -19,9 +17,8 @@ LOCAL_SRC_FILES:= 	       \
 	EGL/getProcAddress.cpp.arm \
 	EGL/Loader.cpp 	       \
 
-LOCAL_CFLAGS += $(FLTO_FLAG) -ffast-math
 LOCAL_SHARED_LIBRARIES += libcutils libutils libGLESv2_dbg
-LOCAL_LDLIBS := $(FLTO_FLAG) -lpthread -ldl
+LOCAL_LDLIBS := -lpthread -ldl
 LOCAL_MODULE:= libEGL
 LOCAL_LDFLAGS += -Wl,--exclude-libs=ALL
 LOCAL_SHARED_LIBRARIES += libdl
@@ -78,8 +75,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := GLES_CM/gl.cpp.arm
 
 LOCAL_SHARED_LIBRARIES += libcutils libEGL
-LOCAL_CFLAGS += $(FLTO_FLAG) -ffast-math
-LOCAL_LDLIBS := $(FLTO_FLAG) -lpthread -ldl
+LOCAL_LDLIBS := -lpthread -ldl
 LOCAL_MODULE:= libGLESv1_CM
 
 LOCAL_SHARED_LIBRARIES += libdl
@@ -96,10 +92,6 @@ LOCAL_CFLAGS += -DLOG_TAG=\"libGLESv1\"
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
 LOCAL_CFLAGS += -fvisibility=hidden
 
-ifeq ($(TARGET_MISSING_EGL_EXTERNAL_IMAGE),true)
-  LOCAL_CFLAGS += -DHOOK_MISSING_EGL_EXTERNAL_IMAGE
-endif
-
 include $(BUILD_SHARED_LIBRARY)
 
 
@@ -111,9 +103,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := GLES2/gl2.cpp.arm
 
-LOCAL_CFLAGS += $(FLTO_FLAG) -ffast-math
 LOCAL_SHARED_LIBRARIES += libcutils libEGL
-LOCAL_LDLIBS := $(FLTO_FLAG) -lpthread -ldl
+LOCAL_LDLIBS := -lpthread -ldl
 LOCAL_MODULE:= libGLESv2
 
 LOCAL_SHARED_LIBRARIES += libdl
@@ -129,10 +120,6 @@ LOCAL_C_INCLUDES += bionic/libc/private
 LOCAL_CFLAGS += -DLOG_TAG=\"libGLESv2\"
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
 LOCAL_CFLAGS += -fvisibility=hidden
-
-ifeq ($(TARGET_MISSING_EGL_EXTERNAL_IMAGE),true)
-  LOCAL_CFLAGS += -DHOOK_MISSING_EGL_EXTERNAL_IMAGE
-endif
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -157,8 +144,7 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := ETC1/etc1.cpp
 
-LOCAL_CFLAGS += $(FLTO_FLAG) -ffast-math
-LOCAL_LDLIBS := $(FLTO_FLAG) -lpthread -ldl
+LOCAL_LDLIBS := -lpthread -ldl
 LOCAL_MODULE:= libETC1
 
 include $(BUILD_SHARED_LIBRARY)
