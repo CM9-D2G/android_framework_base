@@ -408,6 +408,7 @@ CameraParameters::CameraParameters()
 CameraParametersBase::~CameraParametersBase()
 #else
 CameraParameters::~CameraParameters()
+#endif
 {
 }
 
