@@ -80,6 +80,11 @@ LOCAL_SRC_FILES:=                         \
         avc_utils.cpp                     \
         APE.cpp                           \
 
+ifeq ($(OMAP_ENHANCEMENT), true)
+        LOCAL_SRC_FILES += ASFExtractor.cpp
+        LOCAL_SRC_FILES += AVIExtractor.cpp
+endif
+
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
         LOCAL_SRC_FILES += ExtendedExtractor.cpp
         LOCAL_SRC_FILES += ExtendedWriter.cpp

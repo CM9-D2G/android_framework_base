@@ -33,6 +33,11 @@
 #include "include/AVIExtractor.h"
 #endif
 
+#ifdef OMAP_ENHANCEMENT
+#include "include/ASFExtractor.h"
+#include "include/AVIExtractor.h"
+#endif
+
 #include <media/stagefright/MediaDefs.h>
 
 #include "matroska/MatroskaExtractor.h"
@@ -175,6 +180,12 @@ void DataSource::RegisterDefaultSniffers() {
     RegisterSniffer(SniffMPEG2PS);
 #ifdef QCOM_HARDWARE
     ExtendedExtractor::RegisterSniffers();
+#endif
+#ifdef OMAP_ENHANCEMENT
+    if (isASFParserAvailable()) {
+        RegisterSniffer(SniffASF);
+    }
+    RegisterSniffer(SniffAVI);
 #endif
 
     char value[PROPERTY_VALUE_MAX];
