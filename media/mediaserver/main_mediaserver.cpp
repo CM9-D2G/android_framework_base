@@ -57,9 +57,9 @@ int main(int argc, char** argv)
     SecTVOutService::instantiate();
 #endif
     AudioFlinger::instantiate();
-    MediaPlayerService::instantiate();
     CameraService::instantiate();
     AudioPolicyService::instantiate();
+    MediaPlayerService::instantiate();
     ProcessState::self()->startThreadPool();
     IPCThreadState::self()->joinThreadPool();
 }
