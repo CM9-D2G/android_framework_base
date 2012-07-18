@@ -30,10 +30,6 @@
 #include "include/MPEG2TSExtractor.h"
 #include "include/WVMExtractor.h"
 
-#ifdef OMAP_ENHANCEMENT
-#include "include/ASFExtractor.h"
-#endif
-
 #include "timedtext/TimedTextPlayer.h"
 
 #include <binder/IPCThreadState.h>
