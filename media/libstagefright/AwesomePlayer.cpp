@@ -849,7 +849,7 @@ void AwesomePlayer::onBufferingUpdate() {
                     LOGI("cache is running low (< %d) , pausing.",
                          kLowWaterMarkBytes);
                     modifyFlags(CACHE_UNDERRUN, SET);
-#if defined(OMAP_ENHANCEMENT) && defined(TIME_INTERPOLATOR)
+#if defined(OMAP_ENHANCEMENT) && defined(OMAP_TIME_INTERPOLATOR)
                     // if cache is running low because of seek, wait for seek complete event to occur before pausing.
                     // pause causes all events to be cancelled and therefore the event MEDIA_SEEK_COMPLETE will be lost.
                     if (!mWatchForAudioSeekComplete) pause_l();
@@ -911,7 +911,7 @@ void AwesomePlayer::onBufferingUpdate() {
             LOGI("cache is running low (%.2f secs) , pausing.",
                  cachedDurationUs / 1E6);
             modifyFlags(CACHE_UNDERRUN, SET);
-#if defined(OMAP_ENHANCEMENT) && defined(TIME_INTERPOLATOR)
+#if defined(OMAP_ENHANCEMENT) && defined(OMAP_TIME_INTERPOLATOR)
             // if cache is running low because of seek, wait for seek complete event to occur before pausing.
             // pause causes all events to be cancelled and therefore the event MEDIA_SEEK_COMPLETE will be lost.
             if (!mWatchForAudioSeekComplete) pause_l();
@@ -2308,7 +2308,7 @@ void AwesomePlayer::onVideoEvent() {
                     }
                 }
 
-#if defined(OMAP_ENHANCEMENT) && defined(TIME_INTERPOLATOR)
+#if defined(OMAP_ENHANCEMENT) && defined(OMAP_TIME_INTERPOLATOR)
                 postVideoEvent_l(0);
 #else
                 postVideoEvent_l();
