@@ -1225,7 +1225,7 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
                     profile, AVCProfileToString(profile), level);
 
             if (!strcmp(mComponentName, "OMX.TI.Video.Decoder")
-                && (profile != kAVCProfileBaseline || level > 31)) {
+                && (profile != kAVCProfileBaseline || level > 30)) {
                 // This stream exceeds the decoder's capabilities. The decoder
                 // does not handle this gracefully and would clobber the heap
                 // and wreak havoc instead...
@@ -2411,6 +2411,11 @@ status_t OMXCodec::setVideoOutputFormat(
                 format.eColorFormat = OMX_COLOR_FormatYUV420Planar;
             else
                 format.eColorFormat = OMX_COLOR_FormatYUV420SemiPlanar;
+        }
+#endif
+#ifdef OMAP_COMPAT
+        if (!strncmp("OMX.TI.", mComponentName, 7)) {
+            format.eColorFormat = OMX_COLOR_FormatYUV420Planar;
         }
 #endif
 
