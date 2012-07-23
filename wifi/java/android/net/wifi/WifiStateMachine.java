@@ -1713,6 +1713,7 @@ public class WifiStateMachine extends StateMachine {
         }
 
         mPowerMode =  WifiNative.getPowerModeCommand();
+        log("WifiNative: mPowerMode = " + mPowerMode);
         if (mPowerMode < 0) {
             // Handle the case where supplicant driver does not support
             // getPowerModeCommand.
