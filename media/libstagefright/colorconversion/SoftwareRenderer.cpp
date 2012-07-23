@@ -30,11 +30,6 @@
 
 namespace android {
 
-static int ALIGN(int x, int y) {
-    // y must be a power of 2.
-    return (x + y - 1) & ~(y - 1);
-}
-
 SoftwareRenderer::SoftwareRenderer(
         const sp<ANativeWindow> &nativeWindow, const sp<MetaData> &meta)
     : mConverter(NULL),
@@ -68,27 +63,16 @@ SoftwareRenderer::SoftwareRenderer(
 
     switch (mColorFormat) {
         case OMX_COLOR_FormatYUV420Planar:
-#ifdef OMAP_COMPAT
-        /* OMX.TI.VideoDecoder decoding to OMX_COLOR_FormatYUV420Planar
-           is buggy (causing occasional DSP bridge resets), so we have
-           to use OMX_COLOR_FormatCbYCrY, which is reliable */
         case OMX_COLOR_FormatCbYCrY:
-#endif
         case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
         {
             halFormat = HAL_PIXEL_FORMAT_YV12;
-#ifndef OMAP_COMPAT
             bufWidth = (mCropWidth + 1) & ~1;
-#else
-            /* omap3.gralloc.so 8 aligns the stride of YV12 buffer
-            instead of 16 align, so we have to align the width ourselves
-            to avoid broken playback of videos with width not multiple of 16 */
-            bufWidth = ALIGN(mCropWidth, 16);
-#endif
             bufHeight = (mCropHeight + 1) & ~1;
             break;
         }
         default:
+            LOGW("HAL_PIXEL_FORMAT_RGB_565! Unnecessary YUV->RGB conversion!!!");
             halFormat = HAL_PIXEL_FORMAT_RGB_565;
             bufWidth = mCropWidth;
             bufHeight = mCropHeight;
@@ -142,6 +126,11 @@ SoftwareRenderer::~SoftwareRenderer() {
     mConverter = NULL;
 }
 
+static int ALIGN(int x, int y) {
+    // y must be a power of 2.
+    return (x + y - 1) & ~(y - 1);
+}
+
 void SoftwareRenderer::render(
         const void *data, size_t size, void *platformPrivate) {
     ANativeWindowBuffer *buf;
@@ -155,15 +144,13 @@ void SoftwareRenderer::render(
 
     GraphicBufferMapper &mapper = GraphicBufferMapper::get();
 
-#ifndef OMAP_COMPAT
     Rect bounds(mCropWidth, mCropHeight);
-#else
-    Rect bounds(buf->width, mCropHeight);
-#endif
 
     void *dst;
     CHECK_EQ(0, mapper.lock(
                 buf->handle, GRALLOC_USAGE_SW_WRITE_OFTEN, bounds, &dst));
+
+    //LOGI("mColorFormat %x, mWidth %d, mHeight %d, buf->stride %d, buf->height %d, mCropWidth %d, mCropHeight %d, mCropLeft %d, mCropTop %d, mCropRight %d, mCropBottom %d", mColorFormat, mWidth, mHeight, buf->stride, buf->height, mCropWidth, mCropHeight, mCropLeft, mCropTop, mCropRight, mCropBottom);
 
     if (mConverter) {
         mConverter->convert(
@@ -193,9 +180,6 @@ void SoftwareRenderer::render(
 #ifndef OMAP_COMPAT
         size_t dst_c_stride = ALIGN(buf->stride / 2, 16);
 #else
-        /* the above ALIGN of just the color plane stride would have
-           caused writes outside of the allocated buffer, so it has
-           to be avoided */
         size_t dst_c_stride = buf->stride / 2;
 #endif
         size_t dst_y_size = buf->stride * buf->height;
@@ -221,52 +205,37 @@ void SoftwareRenderer::render(
             dst_u += dst_c_stride;
             dst_v += dst_c_stride;
         }
-#ifdef OMAP_COMPAT
     } else if (mColorFormat == OMX_COLOR_FormatCbYCrY) {
-        const uint8_t *src = (const uint8_t *)data;
-
-        size_t dst_y_size = buf->stride * buf->height;
-        size_t dst_c_size = buf->stride * buf->height / 4;
-
-        /* small pillarbox for videos with width not multiple of 16, needed
-           because of bug in (proprietary) gralloc.omap3.so as it 8 aligns
-           the stride of YV12 buffer instead of the correct 16 align */
-        size_t pb_c_size = (buf->stride - mCropWidth) / 2;
-        size_t pb_c_l_size = pb_c_size / 2;
-        size_t pb_c_r_size = pb_c_size - pb_c_l_size;
-        size_t pb_y_l_size = pb_c_l_size * 2;
-
+        int i, j;
+        uint8_t *src = (uint8_t *)data;
+        uint8_t *src1 = src;
         uint8_t *dst_y = (uint8_t *)dst;
-        uint8_t *dst_v = dst_y + dst_y_size;
-        uint8_t *dst_u = dst_v + dst_c_size;
+        uint8_t *dst_u, *dst_v;
 
-        size_t nl_src = mWidth * 2;         // next line offset - source
-        size_t n2l_dst_y = buf->stride * 2; // next 2 lines offset - dest y
-
-        dst_y += pb_y_l_size;
-        memset(dst_v, 0x80, pb_c_l_size);   // make the pillarbox black
-        memset(dst_u, 0x80, pb_c_l_size);
-        dst_v += pb_c_l_size;
-        dst_u += pb_c_l_size;
-        for (int i = 0; i < mCropHeight; i += 2) {
-            size_t pb_c_size_tmp = i < mCropHeight - 2 ? pb_c_size : pb_c_r_size;
-            for (int j = 0; j < mCropWidth; j += 2) {
-                dst_y[j] = src[1];
-                dst_y[j + 1] = src[3];
-                dst_y[j + buf->stride] = src[nl_src + 1];
-                dst_y[j + buf->stride + 1] = src[nl_src + 3];
-                *dst_v++ = (src[2] + src[nl_src + 2]) / 2;
-                *dst_u++ = (src[0] + src[nl_src]) / 2;
-                src += 4;
+        src1 = src;
+        for (i = 0; i < mHeight; i++) {
+            for (j = 0; j < mWidth; j += 2) {
+            *dst_y++ = src1[1];
+            *dst_y++ = src1[3];
+            src1 += 4;
             }
-            src += nl_src;
-            dst_y += n2l_dst_y;
-            memset(dst_v, 0x80, pb_c_size_tmp);
-            memset(dst_u, 0x80, pb_c_size_tmp);
-            dst_v += pb_c_size_tmp;
-            dst_u += pb_c_size_tmp;
         }
-#endif
+
+        src1 = src + mWidth * 2;		/* next line */
+
+        dst_v = dst_y;
+        dst_u = dst_y + mWidth * mHeight / 4;
+
+        for (i = 0; i < mHeight; i += 2) {
+            for (j = 0; j < mWidth; j += 2) {
+                *dst_u++ = (src[0] + src1[0]) / 2;
+                *dst_v++ = (src[2] + src1[2]) / 2;
+                src += 4;
+                src1 += 4;
+            }
+            src = src1;
+            src1 += mWidth * 2;
+        }
     } else {
         CHECK_EQ(mColorFormat, OMX_TI_COLOR_FormatYUV420PackedSemiPlanar);
 
